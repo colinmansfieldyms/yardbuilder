@@ -1701,6 +1701,14 @@
     facilityId = parseInt(facilityNumberInput.value, 10) || 1;
     nextZoneId = parseInt(startingZoneNumberInput.value, 10) || 1;
 
+    // Layers sidebar elements - defined early so rebuildLostBox() can access
+    const layersSidebar = document.getElementById('layersSidebar');
+    const layersHeader = document.getElementById('layersHeader');
+    const layersCollapseIcon = document.getElementById('layersCollapseIcon');
+    const layersList = document.getElementById('layersList');
+    const layerContextMenu = document.getElementById('layerContextMenu');
+    let contextTarget = null;
+
     facilityNumberInput.addEventListener('change', () => {
     facilityId = parseInt(facilityNumberInput.value, 10) || 1;
 
@@ -1919,8 +1927,7 @@
       return group;
     }
 
-    // Build Lost Box at start
-    rebuildLostBox();
+
 
     // =======================================
     // SVG WRAPPER & TRASH
@@ -3764,6 +3771,8 @@
     rebuildLayersList();
   });
 
+
+  rebuildLostBox();
   rebuildLayersList();
   </script>
 </body>
