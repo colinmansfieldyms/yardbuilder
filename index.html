@@ -530,15 +530,23 @@
       color: #fff;
       overflow-y: auto;
       box-sizing: border-box;
-      transition: transform 0.3s ease;
+      transition: width 0.3s ease;
       position: absolute;
       right: 0;
       top: 0;
       bottom: 0;
-      position: relative;
+      display: flex;
+      flex-direction: column;
     }
     .layers-sidebar.collapsed {
-      transform: translateX(100%);
+      width: 40px;
+    }
+    .layers-sidebar.collapsed h3,
+    .layers-sidebar.collapsed #layersList {
+      display: none;
+    }
+    .layers-sidebar.collapsed .layers-header {
+      justify-content: center;
     }
     .layers-header {
       display: flex;
