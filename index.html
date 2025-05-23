@@ -535,6 +535,7 @@
       right: 0;
       top: 0;
       bottom: 0;
+      position: relative;
     }
     .layers-sidebar.collapsed {
       transform: translateX(100%);
@@ -3629,6 +3630,12 @@
   }
 
   // ------ Layers Management ------
+  const layersSidebar = document.getElementById('layersSidebar');
+  const layersHeader = document.getElementById('layersHeader');
+  const layersCollapseIcon = document.getElementById('layersCollapseIcon');
+  const layersList = document.getElementById('layersList');
+  const layerContextMenu = document.getElementById('layerContextMenu');
+  let contextTarget = null;
 
   layersHeader.addEventListener('click', () => {
     layersSidebar.classList.toggle('collapsed');
