@@ -531,6 +531,10 @@
       overflow-y: auto;
       box-sizing: border-box;
       transition: transform 0.3s ease;
+      position: absolute;
+      right: 0;
+      top: 0;
+      bottom: 0;
       position: relative;
     }
     .layers-sidebar.collapsed {
@@ -1812,6 +1816,14 @@
     // =======================================
     const lostBoxTypeSelect = document.getElementById('lostBoxTypeSelect');
     const hideLostBoxToggle = document.getElementById('hideLostBoxToggle');
+
+    // ------ Layers Sidebar Elements ------
+    const layersSidebar = document.getElementById('layersSidebar');
+    const layersHeader = document.getElementById('layersHeader');
+    const layersCollapseIcon = document.getElementById('layersCollapseIcon');
+    const layersList = document.getElementById('layersList');
+    const layerContextMenu = document.getElementById('layerContextMenu');
+    let contextTarget = null;
 
     lostBoxTypeSelect.addEventListener('change', () => {
       lostBoxType = lostBoxTypeSelect.value;
@@ -3625,7 +3637,12 @@
   }
 
   // ------ Layers Management ------
-
+  const layersSidebar = document.getElementById('layersSidebar');
+  const layersHeader = document.getElementById('layersHeader');
+  const layersCollapseIcon = document.getElementById('layersCollapseIcon');
+  const layersList = document.getElementById('layersList');
+  const layerContextMenu = document.getElementById('layerContextMenu');
+  let contextTarget = null;
 
   layersHeader.addEventListener('click', () => {
     layersSidebar.classList.toggle('collapsed');
@@ -3753,6 +3770,7 @@
     layerContextMenu.style.display = 'none';
     rebuildLayersList();
   });
+
 
   rebuildLostBox();
   rebuildLayersList();
