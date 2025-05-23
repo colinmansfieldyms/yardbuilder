@@ -680,6 +680,19 @@
         <input id="facilityNumberInput" type="number" value="1" min="1" />
       </div>
 
+      <!-- STARTING ZONE NUMBER INPUT (inline) -->
+      <div class="facility-inline">
+        <label for="startingZoneNumberInput" style="white-space: nowrap;">
+          #️⃣ Starting Zone #:
+        </label>
+        <span class="tooltip-container">
+          <span class="tooltip-text">
+            Enter the zone number you want to start from. Changing this value will renumber all existing zones.
+          </span>
+        </span>
+        <input id="startingZoneNumberInput" type="number" value="1" min="1" />
+      </div>
+
       <!-- Snap to Grid Toggle Section -->
       <div class="toggle-section">
         <label for="snapToGridToggle">🔳 Snap to Grid</label>
@@ -1584,7 +1597,7 @@
     let currentScale = 1;
 
     let facilityId = 1;
-    let nextSpotSequence = 1;  
+    let nextSpotSequence = 1;
     let nextZoneId = 1;
     const zoneNameToIdMap = {};
 
@@ -1595,7 +1608,11 @@
 
     // Initialize facility
     const facilityNumberInput = document.getElementById('facilityNumberInput');
+    const startingZoneNumberInput = document.getElementById('startingZoneNumberInput');
+
     facilityId = parseInt(facilityNumberInput.value, 10) || 1;
+    nextZoneId = parseInt(startingZoneNumberInput.value, 10) || 1;
+
     facilityNumberInput.addEventListener('change', () => {
     facilityId = parseInt(facilityNumberInput.value, 10) || 1;
 
@@ -1605,6 +1622,11 @@
     // Rebuild Lost Box if needed
     rebuildLostBox();
 });
+
+    startingZoneNumberInput.addEventListener('change', () => {
+    const newStart = parseInt(startingZoneNumberInput.value, 10) || 1;
+    reassignZoneIdsForNewStart(newStart);
+    });
 
     function reassignSpotIdsForNewFacility(newFacId) {
       const allSpots = document.querySelectorAll('g.eagleViewDropSpot');
@@ -1632,6 +1654,32 @@
           unloadTri.setAttribute('data-unloading-id', newId);
         }
       });
+    }
+
+    function reassignZoneIdsForNewStart(newStart) {
+      const rows = Array.from(zonesTableBody.querySelectorAll('tr'));
+
+      for (let key in zoneNameToIdMap) {
+        delete zoneNameToIdMap[key];
+      }
+
+      let currentId = newStart;
+      rows.forEach(row => {
+        const zoneName = row.children[0].textContent;
+        const oldId = row.getAttribute('data-zone-id');
+
+        document.querySelectorAll(`g[data-zone-id="${oldId}"]`).forEach(el => {
+          el.setAttribute('data-zone-id', currentId);
+        });
+
+        row.setAttribute('data-zone-id', currentId);
+        row.children[1].textContent = currentId;
+
+        zoneNameToIdMap[zoneName] = currentId;
+        currentId++;
+      });
+
+      nextZoneId = currentId;
     }
 
 
@@ -3419,7 +3467,7 @@
       alert("SVG import complete! Triangles are hidden, and elements are now on the canvas and editable.");
     }
 
-    function rebuildZonesTable() {
+  function rebuildZonesTable() {
       const myScalableContent = document.getElementById("scalableContent");
       const zoneGroups = myScalableContent.querySelectorAll('g[data-zone-id]');
       zonesTableBody.innerHTML = '';
@@ -3428,7 +3476,8 @@
   for (let key in zoneNameToIdMap) {
     delete zoneNameToIdMap[key];
   }
-  nextZoneId = 1;
+  nextZoneId = parseInt(startingZoneNumberInput.value, 10) || 1;
+  let smallestZoneId = Infinity;
 
   zoneGroups.forEach(group => {
     const zoneId = group.getAttribute('data-zone-id');
@@ -3446,8 +3495,14 @@
     if (parseInt(zoneId, 10) >= nextZoneId) {
       nextZoneId = parseInt(zoneId, 10) + 1;
     }
+    if (!isNaN(parseInt(zoneId, 10)) && parseInt(zoneId, 10) < smallestZoneId) {
+      smallestZoneId = parseInt(zoneId, 10);
+    }
     addZoneToTable(zoneName, zoneId);
   });
+  if (zoneGroups.length > 0 && smallestZoneId !== Infinity) {
+    startingZoneNumberInput.value = smallestZoneId;
+  }
   }
   </script>
 </body>
