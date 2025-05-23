@@ -522,6 +522,72 @@
     }
 
     /* =========================
+       LAYERS SIDEBAR
+    ========================= */
+    .layers-sidebar {
+      width: 220px;
+      background-color: #14335D;
+      color: #fff;
+      overflow-y: auto;
+      box-sizing: border-box;
+      transition: transform 0.3s ease;
+      position: relative;
+    }
+    .layers-sidebar.collapsed {
+      transform: translateX(100%);
+    }
+    .layers-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: #2b476d;
+      padding: 0.5rem;
+      cursor: pointer;
+      user-select: none;
+    }
+    #layersList {
+      list-style: none;
+      margin: 0;
+      padding: 0.5rem;
+    }
+    #layersList li {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.3rem;
+      border: 1px solid #4a6fa5;
+      margin-bottom: 0.3rem;
+      background-color: #2b476d;
+      cursor: grab;
+      user-select: none;
+    }
+    #layersList li .layer-name {
+      flex: 1;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    #layerContextMenu {
+      position: absolute;
+      background-color: #2b476d;
+      color: #fff;
+      border: 1px solid #444;
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: none;
+      z-index: 1000;
+    }
+    #layerContextMenu li {
+      padding: 0.4rem 0.8rem;
+      cursor: pointer;
+    }
+    #layerContextMenu li:hover {
+      background-color: #3b5a8d;
+    }
+
+    /* =========================
        MAIN CONTENT
     ========================= */
     .main-content {
@@ -1173,6 +1239,16 @@
           </table>
         </div>
       </div>
+
+    </div>
+
+    <!-- Layers Sidebar -->
+    <div class="layers-sidebar collapsed" id="layersSidebar">
+      <div class="layers-header" id="layersHeader">
+        <h3>Layers</h3>
+        <span class="collapse-icon" id="layersCollapseIcon">☰</span>
+      </div>
+      <ul id="layersList"></ul>
     </div>
 
   </div> <!-- End of body-wrapper -->
@@ -1182,6 +1258,13 @@
     Made with ☕️ by
     <a href="https://yardmanagementsoftware.com" target="_blank">Yard Management Solutions</a>
   </div>
+
+  <ul id="layerContextMenu">
+    <li data-action="bring-front">Send to Front</li>
+    <li data-action="bring-forward">Send Forward</li>
+    <li data-action="send-backward">Send Backward</li>
+    <li data-action="send-back">Send to Back</li>
+  </ul>
 
   <script>
 
@@ -1600,6 +1683,7 @@
     let nextSpotSequence = 1;
     let nextZoneId = 1;
     const zoneNameToIdMap = {};
+    let nextLayerId = 1;
 
     // For Lost Box
     let lostBoxType = 'wide';   // 'wide' or 'tall'
@@ -1740,6 +1824,8 @@
       lostBoxGroup = createLostBoxGroup(lostBoxType, facilityId);
       lostBoxGroup.style.display = lostBoxHidden ? 'none' : '';
       document.getElementById('scalableContent').appendChild(lostBoxGroup);
+      assignLayerId(lostBoxGroup);
+      rebuildLayersList();
     }
 
     function createLostBoxGroup(lType, facId) {
@@ -2608,6 +2694,8 @@
       container.insertBefore(containerHitbox, container.firstChild);
 
       document.getElementById('scalableContent').appendChild(container);
+      assignLayerId(container);
+      rebuildLayersList();
     }
 
     function addDockTriangles(spotGroup, spotId, x, y, w, h, labelLocation, orientation) {
@@ -2837,6 +2925,8 @@
       }
 
       document.getElementById('scalableContent').appendChild(group);
+      assignLayerId(group);
+      rebuildLayersList();
     });
 
     // Dynamically measure text so large labels get a bigger hitbox
@@ -2899,6 +2989,8 @@
 
       // No resize corner for label
       document.getElementById('scalableContent').appendChild(group);
+      assignLayerId(group);
+      rebuildLayersList();
     }
 
     function createCustomImageElement(imageData) {
@@ -2929,6 +3021,8 @@
 
       addResizeCorner(group, defaultWidth, defaultHeight);
       document.getElementById('scalableContent').appendChild(group);
+      assignLayerId(group);
+      rebuildLayersList();
     }
 
     function addResizeCorner(group, w, h) {
@@ -3070,6 +3164,8 @@
       }
 
       document.getElementById('scalableContent').appendChild(group);
+      assignLayerId(group);
+      rebuildLayersList();
       addZoneToTable(zName, thisZoneId);
     });
 
@@ -3316,6 +3412,12 @@
 
       canvasSVG.setAttribute('data-facility-id', facilityId); // records the Facility ID
 
+      // store layer order
+      const groupsForExport = canvasSVG.querySelectorAll('#scalableContent > g');
+      groupsForExport.forEach((g, idx) => {
+        g.setAttribute('data-layer-index', idx);
+      });
+
       const serializer = new XMLSerializer();
       let source = serializer.serializeToString(canvasSVG);
 
@@ -3461,6 +3563,16 @@
       }
       lostBoxGroup = lostBoxes[0] || null; // Reference the remaining Lost Box
 
+      // Sort by stored layer index and assign fresh IDs
+      const groupsArr = Array.from(myScalableContent.querySelectorAll(':scope > g'));
+      groupsArr.sort((a,b) => {
+        return (parseInt(a.getAttribute('data-layer-index')) || 0) -
+               (parseInt(b.getAttribute('data-layer-index')) || 0);
+      });
+      groupsArr.forEach(g => myScalableContent.appendChild(g));
+      groupsArr.forEach(assignLayerId);
+      rebuildLayersList();
+
       rebuildZonesTable();
       updateCounters();
       
@@ -3504,6 +3616,143 @@
     startingZoneNumberInput.value = smallestZoneId;
   }
   }
+
+  // ------ Layers Management ------
+  const layersSidebar = document.getElementById('layersSidebar');
+  const layersHeader = document.getElementById('layersHeader');
+  const layersCollapseIcon = document.getElementById('layersCollapseIcon');
+  const layersList = document.getElementById('layersList');
+  const layerContextMenu = document.getElementById('layerContextMenu');
+  let contextTarget = null;
+
+  layersHeader.addEventListener('click', () => {
+    layersSidebar.classList.toggle('collapsed');
+    layersCollapseIcon.textContent = layersSidebar.classList.contains('collapsed') ? '☰' : '✕';
+  });
+
+  function assignLayerId(el) {
+    if (!el.hasAttribute('data-layer-id')) {
+      el.setAttribute('data-layer-id', nextLayerId++);
+    }
+  }
+
+  function getLayerName(g) {
+    if (g.classList.contains('eagleViewDropSpot')) {
+      return g.getAttribute('data-zone-name') || 'Spot';
+    }
+    if (g.classList.contains('lostTrailer')) return 'Lost Box';
+    if (g.getAttribute('data-zone') === 'yes') {
+      const t = g.querySelector('.zone-name-box + text');
+      return t ? t.textContent : 'Zone';
+    }
+    const main = g.querySelector('[data-role="main"]');
+    if (main) {
+      if (main.tagName === 'image') return 'Custom Image';
+      const fill = main.getAttribute('fill');
+      if (fill === '#63954B') return 'Grass';
+      if (fill === '#fff') return 'Building';
+      if (fill === '#A1A3A5') return 'Pavement';
+    }
+    if (g.querySelector('text')) return 'Label';
+    return 'Element';
+  }
+
+  function getLayerIcon(g) {
+    if (g.classList.contains('eagleViewDropSpot')) {
+      return g.querySelector('.loading_triangle') ? '🚪' : '🅿️';
+    }
+    if (g.classList.contains('lostTrailer')) return '❌';
+    if (g.getAttribute('data-zone') === 'yes') return '📦';
+    const main = g.querySelector('[data-role="main"]');
+    if (main) {
+      if (main.tagName === 'image') return '🖼️';
+      const fill = main.getAttribute('fill');
+      if (fill === '#63954B') return '🌱';
+      if (fill === '#fff') return '🏠';
+      if (fill === '#A1A3A5') return '⬛';
+    }
+    if (g.querySelector('text')) return '🔤';
+    return '❔';
+  }
+
+  function rebuildLayersList() {
+    layersList.innerHTML = '';
+    const groups = document.querySelectorAll('#scalableContent > g');
+    groups.forEach((g, idx) => {
+      assignLayerId(g);
+      g.setAttribute('data-layer-index', idx);
+      const li = document.createElement('li');
+      li.setAttribute('data-target-id', g.getAttribute('data-layer-id'));
+      li.draggable = true;
+      li.innerHTML = `<span class="layer-icon">${getLayerIcon(g)}</span><span class="layer-name">${getLayerName(g)}</span>`;
+      layersList.appendChild(li);
+    });
+  }
+
+  let draggedItem = null;
+  layersList.addEventListener('dragstart', e => {
+    draggedItem = e.target;
+    e.target.classList.add('dragging');
+  });
+  layersList.addEventListener('dragend', e => {
+    e.target.classList.remove('dragging');
+    updateOrderFromList();
+    draggedItem = null;
+  });
+  layersList.addEventListener('dragover', e => {
+    e.preventDefault();
+    const li = e.target.closest('li');
+    const dragging = document.querySelector('#layersList li.dragging');
+    if (!li || !dragging || li === dragging) return;
+    const rect = li.getBoundingClientRect();
+    const next = (e.clientY - rect.top) > rect.height / 2;
+    layersList.insertBefore(dragging, next ? li.nextSibling : li);
+  });
+
+  function updateOrderFromList() {
+    const order = Array.from(layersList.children).map(li => li.dataset.targetId);
+    const scalable = document.getElementById('scalableContent');
+    order.forEach(id => {
+      const g = scalable.querySelector(`[data-layer-id="${id}"]`);
+      if (g) scalable.appendChild(g);
+    });
+    rebuildLayersList();
+  }
+
+  document.getElementById('scalableContent').addEventListener('contextmenu', e => {
+    const g = e.target.closest('#scalableContent > g');
+    if (!g) return;
+    e.preventDefault();
+    contextTarget = g;
+    layerContextMenu.style.display = 'block';
+    layerContextMenu.style.left = e.clientX + 'px';
+    layerContextMenu.style.top = e.clientY + 'px';
+  });
+
+  document.addEventListener('click', () => {
+    layerContextMenu.style.display = 'none';
+  });
+
+  layerContextMenu.addEventListener('click', e => {
+    const action = e.target.dataset.action;
+    if (!action || !contextTarget) return;
+    const parent = contextTarget.parentNode;
+    if (action === 'bring-front') {
+      parent.appendChild(contextTarget);
+    } else if (action === 'bring-forward') {
+      const next = contextTarget.nextElementSibling;
+      if (next) parent.insertBefore(next, contextTarget);
+    } else if (action === 'send-backward') {
+      const prev = contextTarget.previousElementSibling;
+      if (prev) parent.insertBefore(contextTarget, prev);
+    } else if (action === 'send-back') {
+      parent.insertBefore(contextTarget, parent.firstChild);
+    }
+    layerContextMenu.style.display = 'none';
+    rebuildLayersList();
+  });
+
+  rebuildLayersList();
   </script>
 </body>
 </html>
