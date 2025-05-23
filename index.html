@@ -3467,7 +3467,7 @@
       alert("SVG import complete! Triangles are hidden, and elements are now on the canvas and editable.");
     }
 
-    function rebuildZonesTable() {
+  function rebuildZonesTable() {
       const myScalableContent = document.getElementById("scalableContent");
       const zoneGroups = myScalableContent.querySelectorAll('g[data-zone-id]');
       zonesTableBody.innerHTML = '';
@@ -3477,6 +3477,7 @@
     delete zoneNameToIdMap[key];
   }
   nextZoneId = parseInt(startingZoneNumberInput.value, 10) || 1;
+  let smallestZoneId = Infinity;
 
   zoneGroups.forEach(group => {
     const zoneId = group.getAttribute('data-zone-id');
@@ -3494,8 +3495,14 @@
     if (parseInt(zoneId, 10) >= nextZoneId) {
       nextZoneId = parseInt(zoneId, 10) + 1;
     }
+    if (!isNaN(parseInt(zoneId, 10)) && parseInt(zoneId, 10) < smallestZoneId) {
+      smallestZoneId = parseInt(zoneId, 10);
+    }
     addZoneToTable(zoneName, zoneId);
   });
+  if (zoneGroups.length > 0 && smallestZoneId !== Infinity) {
+    startingZoneNumberInput.value = smallestZoneId;
+  }
   }
   </script>
 </body>
