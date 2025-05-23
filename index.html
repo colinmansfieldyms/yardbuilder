@@ -303,7 +303,7 @@
        TRASH CAN (HTML-based)
     ========================= */
     .trash-can {
-      position: fixed;
+      position: absolute;
       bottom: 10px;
       right: 10px;
       width: 48px;
@@ -624,10 +624,6 @@
 
     .body-wrapper.layers-open .main-content {
       margin-right: 200px;
-    }
-
-    .body-wrapper.layers-open .trash-can {
-      right: 210px;
     }
 
     /* =========================
@@ -3762,21 +3758,16 @@
     const groups = Array.from(document.querySelectorAll('#scalableContent > g'))
                         .filter(g => !g.classList.contains('lostTrailer'))
                         .reverse();
-    groups.forEach(g => {
-      assignLayerId(g);
 
-    const groups = Array.from(document.querySelectorAll('#scalableContent > g'));
-    groups.reverse();
     groups.forEach((g, idx) => {
-      if (g.classList.contains('lostTrailer')) return;
       assignLayerId(g);
       g.setAttribute('data-layer-index', idx);
-      if (g.classList.contains('lostTrailer')) return;
+
       const li = document.createElement('li');
       li.setAttribute('data-target-id', g.getAttribute('data-layer-id'));
       li.draggable = true;
-      li.innerHTML = `<span class="layer-handle">☰</span><span class="layer-icon">${getLayerIcon(g)}</span><span class="layer-name">${getLayerName(g)}</span>`;
-      li.innerHTML = `<span class="drag-handle">☰</span><span class="layer-icon">${getLayerIcon(g)}</span><span class="layer-name">${getLayerName(g)}</span>`;
+      li.innerHTML =
+        `<span class="drag-handle">☰</span><span class="layer-icon">${getLayerIcon(g)}</span><span class="layer-name">${getLayerName(g)}</span>`;
       layersList.appendChild(li);
     });
   }
