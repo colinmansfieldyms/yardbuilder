@@ -530,15 +530,23 @@
       color: #fff;
       overflow-y: auto;
       box-sizing: border-box;
-      transition: transform 0.3s ease;
+      transition: width 0.3s ease;
       position: absolute;
       right: 0;
       top: 0;
       bottom: 0;
-      position: relative;
+      display: flex;
+      flex-direction: column;
     }
     .layers-sidebar.collapsed {
-      transform: translateX(100%);
+      width: 40px;
+    }
+    .layers-sidebar.collapsed h3,
+    .layers-sidebar.collapsed #layersList {
+      display: none;
+    }
+    .layers-sidebar.collapsed .layers-header {
+      justify-content: center;
     }
     .layers-header {
       display: flex;
@@ -564,6 +572,9 @@
       background-color: #2b476d;
       cursor: grab;
       user-select: none;
+    }
+    #layersList li .layer-handle {
+      cursor: grab;
     }
     #layersList li .layer-name {
       flex: 1;
@@ -1341,10 +1352,12 @@
           // Optionally, update zones and counters
           rebuildZonesTable();
           updateCounters();
+          ensureLostBoxOnTop();
+          rebuildLayersList();
         }
       }
       updateUndoButtonState();
-    } 
+    }
 
     // =======================================
     // UNDO BUTTON FUNCTIONALITY
@@ -1694,6 +1707,11 @@
     let lostBoxHidden = false;  // hide on canvas or not
     let lostBoxGroup = null;
 
+    function ensureLostBoxOnTop() {
+      const lb = document.querySelector('#scalableContent > g.lostTrailer');
+      if (lb && lb.parentNode) lb.parentNode.appendChild(lb);
+    }
+
     // Initialize facility
     const facilityNumberInput = document.getElementById('facilityNumberInput');
     const startingZoneNumberInput = document.getElementById('startingZoneNumberInput');
@@ -1838,6 +1856,7 @@
       document.getElementById('scalableContent').appendChild(lostBoxGroup);
       assignLayerId(lostBoxGroup);
       rebuildLayersList();
+      ensureLostBoxOnTop();
     }
 
     function createLostBoxGroup(lType, facId) {
@@ -2399,6 +2418,9 @@
 
         // Update counters after deletion
         updateCounters();
+
+        ensureLostBoxOnTop();
+        rebuildLayersList();
 
         trashImg.src = 'https://i.imgur.com/PXejZqX.png'; // closed
       }
@@ -3642,13 +3664,15 @@
   }
 
   function getLayerName(g) {
-    if (g.classList.contains('eagleViewDropSpot')) {
-      return g.getAttribute('data-zone-name') || 'Spot';
-    }
     if (g.classList.contains('lostTrailer')) return 'Lost Box';
     if (g.getAttribute('data-zone') === 'yes') {
       const t = g.querySelector('.zone-name-box + text');
       return t ? t.textContent : 'Zone';
+    }
+    if (g.getAttribute('data-zone-id')) {
+      const name = g.getAttribute('data-zone-name') || 'Group';
+      const count = g.querySelectorAll('g.eagleViewDropSpot').length;
+      return count ? `${name} (${count})` : name;
     }
     const main = g.querySelector('[data-role="main"]');
     if (main) {
@@ -3663,8 +3687,8 @@
   }
 
   function getLayerIcon(g) {
-    if (g.classList.contains('eagleViewDropSpot')) {
-      return g.querySelector('.loading_triangle') ? '🚪' : '🅿️';
+    if (g.querySelector('g.eagleViewDropSpot')) {
+      return g.querySelector('.loading_triangle') ? '🚚' : '🚛';
     }
     if (g.classList.contains('lostTrailer')) return '❌';
     if (g.getAttribute('data-zone') === 'yes') return '📦';
@@ -3682,14 +3706,16 @@
 
   function rebuildLayersList() {
     layersList.innerHTML = '';
-    const groups = document.querySelectorAll('#scalableContent > g');
+    const groups = Array.from(document.querySelectorAll('#scalableContent > g'));
+    groups.reverse();
     groups.forEach((g, idx) => {
+      if (g.classList.contains('lostTrailer')) return;
       assignLayerId(g);
       g.setAttribute('data-layer-index', idx);
       const li = document.createElement('li');
       li.setAttribute('data-target-id', g.getAttribute('data-layer-id'));
       li.draggable = true;
-      li.innerHTML = `<span class="layer-icon">${getLayerIcon(g)}</span><span class="layer-name">${getLayerName(g)}</span>`;
+      li.innerHTML = `<span class="layer-handle">☰</span><span class="layer-icon">${getLayerIcon(g)}</span><span class="layer-name">${getLayerName(g)}</span>`;
       layersList.appendChild(li);
     });
   }
@@ -3721,12 +3747,13 @@
       const g = scalable.querySelector(`[data-layer-id="${id}"]`);
       if (g) scalable.appendChild(g);
     });
+    ensureLostBoxOnTop();
     rebuildLayersList();
   }
 
   document.getElementById('scalableContent').addEventListener('contextmenu', e => {
     const g = e.target.closest('#scalableContent > g');
-    if (!g) return;
+    if (!g || g.classList.contains('lostTrailer')) return;
     e.preventDefault();
     contextTarget = g;
     layerContextMenu.style.display = 'block';
@@ -3741,6 +3768,7 @@
   layerContextMenu.addEventListener('click', e => {
     const action = e.target.dataset.action;
     if (!action || !contextTarget) return;
+    if (contextTarget.classList.contains('lostTrailer')) return;
     const parent = contextTarget.parentNode;
     if (action === 'bring-front') {
       parent.appendChild(contextTarget);
@@ -3754,6 +3782,7 @@
       parent.insertBefore(contextTarget, parent.firstChild);
     }
     layerContextMenu.style.display = 'none';
+    ensureLostBoxOnTop();
     rebuildLayersList();
   });
 
