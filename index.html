@@ -303,7 +303,7 @@
        TRASH CAN (HTML-based)
     ========================= */
     .trash-can {
-      position: absolute;
+      position: fixed;
       bottom: 10px;
       right: 10px;
       width: 48px;
@@ -530,15 +530,23 @@
       color: #fff;
       overflow-y: auto;
       box-sizing: border-box;
-      transition: transform 0.3s ease;
+      transition: width 0.3s ease;
       position: absolute;
       right: 0;
       top: 0;
       bottom: 0;
-      position: relative;
+      display: flex;
+      flex-direction: column;
     }
     .layers-sidebar.collapsed {
-      transform: translateX(100%);
+      width: 40px;
+    }
+    .layers-sidebar.collapsed h3,
+    .layers-sidebar.collapsed #layersList {
+      display: none;
+    }
+    .layers-sidebar.collapsed .layers-header {
+      justify-content: center;
     }
     .layers-header {
       display: flex;
@@ -1717,6 +1725,7 @@
 
     // Rebuild Lost Box if needed
     rebuildLostBox();
+    ensureLostBoxOnTop();
 });
 
     startingZoneNumberInput.addEventListener('change', () => {
@@ -1820,6 +1829,7 @@
     lostBoxTypeSelect.addEventListener('change', () => {
       lostBoxType = lostBoxTypeSelect.value;
       rebuildLostBox();
+      ensureLostBoxOnTop();
     });
     hideLostBoxToggle.addEventListener('change', () => {
       lostBoxHidden = hideLostBoxToggle.checked;
@@ -1837,6 +1847,7 @@
       lostBoxGroup.style.display = lostBoxHidden ? 'none' : '';
       document.getElementById('scalableContent').appendChild(lostBoxGroup);
       assignLayerId(lostBoxGroup);
+      ensureLostBoxOnTop();
       rebuildLayersList();
     }
 
@@ -3682,10 +3693,11 @@
 
   function rebuildLayersList() {
     layersList.innerHTML = '';
-    const groups = document.querySelectorAll('#scalableContent > g');
-    groups.forEach((g, idx) => {
+    const groups = Array.from(document.querySelectorAll('#scalableContent > g'))
+                        .filter(g => !g.classList.contains('lostTrailer'))
+                        .reverse();
+    groups.forEach(g => {
       assignLayerId(g);
-      g.setAttribute('data-layer-index', idx);
       const li = document.createElement('li');
       li.setAttribute('data-target-id', g.getAttribute('data-layer-id'));
       li.draggable = true;
@@ -3695,8 +3707,10 @@
   }
 
   let draggedItem = null;
+  let dragStartX = 0;
   layersList.addEventListener('dragstart', e => {
     draggedItem = e.target;
+    dragStartX = e.clientX;
     e.target.classList.add('dragging');
   });
   layersList.addEventListener('dragend', e => {
@@ -3709,19 +3723,30 @@
     const li = e.target.closest('li');
     const dragging = document.querySelector('#layersList li.dragging');
     if (!li || !dragging || li === dragging) return;
+    if (Math.abs(e.clientX - dragStartX) > 80) return;
     const rect = li.getBoundingClientRect();
     const next = (e.clientY - rect.top) > rect.height / 2;
     layersList.insertBefore(dragging, next ? li.nextSibling : li);
   });
 
   function updateOrderFromList() {
-    const order = Array.from(layersList.children).map(li => li.dataset.targetId);
     const scalable = document.getElementById('scalableContent');
-    order.forEach(id => {
+    const lost = scalable.querySelector('g.lostTrailer');
+    const order = Array.from(layersList.children).map(li => li.dataset.targetId);
+    order.reverse().forEach(id => {
       const g = scalable.querySelector(`[data-layer-id="${id}"]`);
-      if (g) scalable.appendChild(g);
+      if (g && g !== lost) {
+        scalable.insertBefore(g, lost || null);
+      }
     });
+    ensureLostBoxOnTop();
     rebuildLayersList();
+  }
+
+  function ensureLostBoxOnTop() {
+    const scalable = document.getElementById('scalableContent');
+    const lost = scalable.querySelector('g.lostTrailer');
+    if (lost) scalable.appendChild(lost);
   }
 
   document.getElementById('scalableContent').addEventListener('contextmenu', e => {
@@ -3753,12 +3778,14 @@
     } else if (action === 'send-back') {
       parent.insertBefore(contextTarget, parent.firstChild);
     }
+    ensureLostBoxOnTop();
     layerContextMenu.style.display = 'none';
     rebuildLayersList();
   });
 
 
   rebuildLostBox();
+  ensureLostBoxOnTop();
   rebuildLayersList();
   </script>
 </body>
