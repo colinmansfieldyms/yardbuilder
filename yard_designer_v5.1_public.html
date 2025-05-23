@@ -1280,9 +1280,11 @@
     // =======================================
     const sidebar = document.getElementById('sidebar');
     const collapseIcon = document.getElementById('collapseIcon');
-    sidebar.querySelector('.sidebar-header').onclick = () => {
+    const sidebarHeader = sidebar.querySelector('.sidebar-header');
+    sidebarHeader.addEventListener('click', () => {
       sidebar.classList.toggle('collapsed');
-    };
+      collapseIcon.textContent = sidebar.classList.contains('collapsed') ? '☰' : '✕';
+    });
 
     // =======================================
     // COLLAPSIBLE MENUS
