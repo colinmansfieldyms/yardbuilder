@@ -1258,6 +1258,7 @@
                 <th>Zone Name</th>
                 <th>Zone ID</th>
                 <th>Number of Spots / Docks</th>
+                <th>Spot / Dock IDs</th>
               </tr>
             </thead>
             <tbody>
@@ -1990,6 +1991,14 @@
       const spots = canvasSVG.querySelectorAll(`g.eagleViewDropSpot[data-zone-id="${zoneId}"]`);
       spots.forEach(spot => spot.classList.remove('highlighted'));
     }
+    function highlightLayer(layerId) {
+      const g = document.querySelector(`#scalableContent > g[data-layer-id="${layerId}"]`);
+      if (g) g.classList.add("highlighted");
+    }
+    function removeHighlightLayer(layerId) {
+      const g = document.querySelector(`#scalableContent > g[data-layer-id="${layerId}"]`);
+      if (g) g.classList.remove("highlighted");
+    }
 
     function addZoneToTable(zoneName, zoneId) {
       // 1) Count current total
@@ -1997,6 +2006,7 @@
         `g.eagleViewDropSpot[data-zone-id="${zoneId}"]`
       );
       const numberOfSpots = allZoneSpots.length;
+      const spotIds = Array.from(allZoneSpots).map(s => s.getAttribute("data-spot-id")).join(", ");
 
       // 2) See if a row for this zone already exists
       const existingRow = zonesTableBody.querySelector(`tr[data-zone-id="${zoneId}"]`);
@@ -2006,6 +2016,7 @@
         // existingRow.children[1] is Zone ID cell (unchanged)
         // existingRow.children[2] is "Number of Spots"
         existingRow.children[2].textContent = numberOfSpots;
+        existingRow.children[3].textContent = spotIds;
         updateCounters(); 
         return;
       }
@@ -2025,10 +2036,13 @@
       // (C) Number of Spots
       const tdCount = document.createElement('td');
       tdCount.textContent = numberOfSpots;
+      const tdIds = document.createElement("td");
+      tdIds.textContent = spotIds;
 
       tr.appendChild(tdName);
       tr.appendChild(tdId);
       tr.appendChild(tdCount);
+      tr.appendChild(tdIds);
 
       zonesTableBody.appendChild(tr);
 
@@ -3768,6 +3782,8 @@
       li.draggable = true;
       li.innerHTML =
         `<span class="drag-handle">☰</span><span class="layer-icon">${getLayerIcon(g)}</span><span class="layer-name">${getLayerName(g)}</span>`;
+      li.addEventListener("mouseover", () => highlightLayer(g.getAttribute("data-layer-id")));
+      li.addEventListener("mouseout", () => removeHighlightLayer(g.getAttribute("data-layer-id")));
       layersList.appendChild(li);
     });
   }
