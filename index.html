@@ -525,7 +525,7 @@
        LAYERS SIDEBAR
     ========================= */
     .layers-sidebar {
-      width: 220px;
+      width: 200px;
       background-color: #14335D;
       color: #fff;
       overflow-y: auto;
@@ -573,8 +573,15 @@
       cursor: grab;
       user-select: none;
     }
+
     #layersList li .layer-handle {
       cursor: grab;
+    }
+    #layersList li .drag-handle {
+      visibility: hidden;
+    }
+    #layersList li:hover .drag-handle {
+      visibility: visible;
     }
     #layersList li .layer-name {
       flex: 1;
@@ -612,6 +619,15 @@
       overflow: auto;
       min-height: 0; /* Important for flex children to shrink properly */
       align-items: center; /* Center the Zones List horizontally */
+      transition: margin-right 0.3s ease;
+    }
+
+    .body-wrapper.layers-open .main-content {
+      margin-right: 200px;
+    }
+
+    .body-wrapper.layers-open .trash-can {
+      right: 210px;
     }
 
     /* =========================
@@ -740,7 +756,7 @@
 
 
   <!-- MAIN CONTENT WRAPPER -->
-  <div class="body-wrapper">
+  <div class="body-wrapper" id="bodyWrapper">
     <!-- SIDEBAR -->
     <div class="sidebar" id="sidebar">
       <div class="sidebar-header">
@@ -1279,6 +1295,7 @@
     <li data-action="bring-forward">Send Forward</li>
     <li data-action="send-backward">Send Backward</li>
     <li data-action="send-back">Send to Back</li>
+    <li data-action="delete">Delete</li>
   </ul>
 
   <script>
@@ -1726,6 +1743,7 @@
     const layersList = document.getElementById('layersList');
     const layerContextMenu = document.getElementById('layerContextMenu');
     let contextTarget = null;
+    document.getElementById('bodyWrapper').classList.toggle('layers-open', !layersSidebar.classList.contains('collapsed'));
 
     facilityNumberInput.addEventListener('change', () => {
     facilityId = parseInt(facilityNumberInput.value, 10) || 1;
@@ -2424,6 +2442,30 @@
 
         trashImg.src = 'https://i.imgur.com/PXejZqX.png'; // closed
       }
+    }
+
+    function deleteGroupDirect(group) {
+      if (!group || group.classList.contains('lostTrailer')) return;
+      const parent = group.parentNode;
+      if (!parent) return;
+      const siblings = Array.from(parent.children);
+      const index = siblings.indexOf(group);
+      const clonedGroup = group.cloneNode(true);
+      const originalX = group.__undoData ? group.__undoData.oldX : 0;
+      const originalY = group.__undoData ? group.__undoData.oldY : 0;
+
+      pushUndoAction({
+        type: 'delete',
+        element: clonedGroup,
+        parent: parent,
+        index: index,
+        oldX: originalX,
+        oldY: originalY
+      });
+
+      group.remove();
+      rebuildZonesTable();
+      updateCounters();
     }
 
     function animateTrash() {
@@ -3655,6 +3697,7 @@
   layersHeader.addEventListener('click', () => {
     layersSidebar.classList.toggle('collapsed');
     layersCollapseIcon.textContent = layersSidebar.classList.contains('collapsed') ? '☰' : '✕';
+    document.getElementById('bodyWrapper').classList.toggle('layers-open', !layersSidebar.classList.contains('collapsed'));
   });
 
   function assignLayerId(el) {
@@ -3665,6 +3708,11 @@
 
   function getLayerName(g) {
     if (g.classList.contains('lostTrailer')) return 'Lost Box';
+    if (g.hasAttribute('data-zone-name')) {
+      const name = g.getAttribute('data-zone-name');
+      const count = g.querySelectorAll('g.eagleViewDropSpot').length;
+      return count ? `${name} (${count})` : name;
+    }
     if (g.getAttribute('data-zone') === 'yes') {
       const t = g.querySelector('.zone-name-box + text');
       return t ? t.textContent : 'Zone';
@@ -3676,6 +3724,7 @@
     }
     const main = g.querySelector('[data-role="main"]');
     if (main) {
+      if (main.getAttribute('data-guard') === 'yes') return 'Guard Shack';
       if (main.tagName === 'image') return 'Custom Image';
       const fill = main.getAttribute('fill');
       if (fill === '#63954B') return 'Grass';
@@ -3694,6 +3743,7 @@
     if (g.getAttribute('data-zone') === 'yes') return '📦';
     const main = g.querySelector('[data-role="main"]');
     if (main) {
+      if (main.getAttribute('data-guard') === 'yes') return '🚓';
       if (main.tagName === 'image') return '🖼️';
       const fill = main.getAttribute('fill');
       if (fill === '#63954B') return '🌱';
@@ -3712,10 +3762,12 @@
       if (g.classList.contains('lostTrailer')) return;
       assignLayerId(g);
       g.setAttribute('data-layer-index', idx);
+      if (g.classList.contains('lostTrailer')) return;
       const li = document.createElement('li');
       li.setAttribute('data-target-id', g.getAttribute('data-layer-id'));
       li.draggable = true;
       li.innerHTML = `<span class="layer-handle">☰</span><span class="layer-icon">${getLayerIcon(g)}</span><span class="layer-name">${getLayerName(g)}</span>`;
+      li.innerHTML = `<span class="drag-handle">☰</span><span class="layer-icon">${getLayerIcon(g)}</span><span class="layer-name">${getLayerName(g)}</span>`;
       layersList.appendChild(li);
     });
   }
@@ -3761,6 +3813,17 @@
     layerContextMenu.style.top = e.clientY + 'px';
   });
 
+  layersList.addEventListener('contextmenu', e => {
+    const li = e.target.closest('li');
+    if (!li) return;
+    e.preventDefault();
+    contextTarget = document.querySelector(`#scalableContent > g[data-layer-id="${li.dataset.targetId}"]`);
+    if (!contextTarget) return;
+    layerContextMenu.style.display = 'block';
+    layerContextMenu.style.left = e.clientX + 'px';
+    layerContextMenu.style.top = e.clientY + 'px';
+  });
+
   document.addEventListener('click', () => {
     layerContextMenu.style.display = 'none';
   });
@@ -3780,6 +3843,9 @@
       if (prev) parent.insertBefore(contextTarget, prev);
     } else if (action === 'send-back') {
       parent.insertBefore(contextTarget, parent.firstChild);
+    } else if (action === 'delete') {
+      deleteGroupDirect(contextTarget);
+      contextTarget = null;
     }
     layerContextMenu.style.display = 'none';
     ensureLostBoxOnTop();
