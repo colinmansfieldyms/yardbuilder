@@ -13,10 +13,32 @@ These instructions apply to all files in this repository.
   npx prettier -c index.html script.js style.css
   ```
 ## Testing
-- Lint check
+- Lint check JavaScript (if JavaScript was altered)
 ```bash
-npm run lint
+npm init @eslint/config@latest
 ```
+- Lint check CSS (if CSS was altered)
+  ```bash
+  npm install @eslint/css -D
+  ```
+  and then
+  ```bash
+  import css from "@eslint/css";
+
+    export default [
+        // lint css files
+        {
+            files: ["**/*.css"],
+            plugins: {
+                css,
+            },
+            language: "css/css",
+            rules: {
+                "css/no-duplicate-imports": "error",
+            },
+        },
+    ];
+  ```
 
 ## Commit Guidelines
 - Write concise, descriptive commit messages.
