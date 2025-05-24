@@ -415,6 +415,7 @@
     let hideTrash  = false;
     let magnetizeEnabled = false;
     let currentScale = 1;
+    let previousScale = 1;
 
     let facilityId = 1;
     let nextSpotSequence = 1;
@@ -944,8 +945,8 @@
       currentElement = group;
 
       const [curX, curY] = [oldX, oldY];
-      offsetX = e.clientX - curX;
-      offsetY = e.clientY - curY;
+      offsetX = e.clientX - curX * currentScale;
+      offsetY = e.clientY - curY * currentScale;
 
       group.__undoData = {
         type: 'move',
@@ -967,13 +968,13 @@
           return;
         }
 
-        let dx = e.clientX - startMouseX;
-        let dy = e.clientY - startMouseY;
+        let dx = (e.clientX - startMouseX) / currentScale;
+        let dy = (e.clientY - startMouseY) / currentScale;
         let newW = startWidth + dx;
         let newH = startHeight + dy;
 
         if (snapToGrid) {
-          const gridSize = 20 * currentScale;
+          const gridSize = 20;
           newW = Math.round(newW / gridSize) * gridSize;
           newH = Math.round(newH / gridSize) * gridSize;
         }
@@ -992,10 +993,10 @@
         updateElementSize(currentElement, newW, newH);
 
       } else {
-        let x = e.clientX - offsetX;
-        let y = e.clientY - offsetY;
+        let x = (e.clientX - offsetX) / currentScale;
+        let y = (e.clientY - offsetY) / currentScale;
         if (snapToGrid) {
-          const gridSize = 20 * currentScale;
+          const gridSize = 20;
           x = Math.round(x / gridSize) * gridSize;
           y = Math.round(y / gridSize) * gridSize;
         }
@@ -2128,17 +2129,28 @@
     // -------------------------------
     // SCALE
     // -------------------------------
-    const applyScaleBtn = document.getElementById('applyScaleBtn');
-    applyScaleBtn.addEventListener('click', () => {
-      const scaleVal = parseFloat(document.getElementById('canvasScale').value);
-      if (isNaN(scaleVal) || scaleVal < 0.1 || scaleVal > 5) {
-        alert('Please enter a valid scale between 0.1 and 5.');
-        return;
-      }
-      const sure = confirm('WARNING: Changing the scale will affect layout and may disrupt existing placements. Continue?');
-      if (!sure) return;
+    const canvasScaleInput = document.getElementById('canvasScale');
+    const scaleDisplay = document.getElementById('scaleDisplay');
+    const resetScaleBtn = document.getElementById('resetScaleBtn');
+
+    canvasScaleInput.addEventListener('mousedown', () => {
+      previousScale = currentScale;
+    });
+
+    canvasScaleInput.addEventListener('input', () => {
+      const scaleVal = parseFloat(canvasScaleInput.value);
       document.getElementById('scalableContent').setAttribute('transform', `scale(${scaleVal})`);
+      canvasSVG.setAttribute('data-canvas-scale', scaleVal);
       currentScale = scaleVal;
+      scaleDisplay.textContent = scaleVal.toFixed(1);
+    });
+
+    resetScaleBtn.addEventListener('click', () => {
+      document.getElementById('scalableContent').setAttribute('transform', `scale(${previousScale})`);
+      canvasSVG.setAttribute('data-canvas-scale', previousScale);
+      currentScale = previousScale;
+      canvasScaleInput.value = previousScale;
+      scaleDisplay.textContent = previousScale.toFixed(1);
     });
 
     // -------------------------------
@@ -2205,6 +2217,7 @@
         });
 
       canvasSVG.setAttribute('data-facility-id', facilityId); // records the Facility ID
+      canvasSVG.setAttribute('data-canvas-scale', currentScale);
 
       // store layer order
       const groupsForExport = canvasSVG.querySelectorAll('#scalableContent > g');
@@ -2319,17 +2332,34 @@
       if (importedFacilityId) {
         facilityNumberInput.value = importedFacilityId;
         facilityId = parseInt(importedFacilityId, 10) || 1;
-        
+
         // Trigger the 'change' Event to Update Related Elements
         const event = new Event('change');
         facilityNumberInput.dispatchEvent(event);
       }
 
-      const importedTransform = importedScalable.getAttribute("transform");
-      if (importedTransform) {
-        myScalableContent.setAttribute("transform", importedTransform);
+      const importedScale = parseFloat(importedSVG.getAttribute('data-canvas-scale'));
+      if (!isNaN(importedScale)) {
+        myScalableContent.setAttribute('transform', `scale(${importedScale})`);
+        currentScale = importedScale;
+        canvasScaleInput.value = importedScale;
+        scaleDisplay.textContent = importedScale.toFixed(1);
+        canvasSVG.setAttribute('data-canvas-scale', importedScale);
+        previousScale = importedScale;
       } else {
-        myScalableContent.setAttribute("transform", "scale(1)");
+        const importedTransform = importedScalable.getAttribute('transform');
+        if (importedTransform) {
+          myScalableContent.setAttribute('transform', importedTransform);
+          const match = /scale\(([^)]+)\)/.exec(importedTransform);
+          currentScale = match ? parseFloat(match[1]) || 1 : 1;
+        } else {
+          myScalableContent.setAttribute('transform', 'scale(1)');
+          currentScale = 1;
+        }
+        canvasScaleInput.value = currentScale;
+        scaleDisplay.textContent = currentScale.toFixed(1);
+        canvasSVG.setAttribute('data-canvas-scale', currentScale);
+        previousScale = currentScale;
       }
 
       const allLoadingTriangles = myScalableContent.querySelectorAll('.loading_triangle');
