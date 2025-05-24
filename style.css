@@ -172,6 +172,21 @@ body {
   width: 60px; /* shrink to fit same line */
 }
 
+/* Scale slider layout */
+.scale-control {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.5rem 0;
+}
+.scale-control input[type="range"] {
+  flex: 1;
+}
+.scale-control button {
+  padding: 0 0.5rem;
+  cursor: pointer;
+}
+
 /* Slight highlight for the Zone Name block */
 .zone-name-block {
   background-color: #1b4c88;

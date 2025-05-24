@@ -415,6 +415,9 @@
     let hideTrash  = false;
     let magnetizeEnabled = false;
     let currentScale = 1;
+    let previousScale = 1;
+    const baseWidth = 1046.5;
+    const baseHeight = 500;
 
     let facilityId = 1;
     let nextSpotSequence = 1;
@@ -973,7 +976,7 @@
         let newH = startHeight + dy;
 
         if (snapToGrid) {
-          const gridSize = 20 * currentScale;
+          const gridSize = 20;
           newW = Math.round(newW / gridSize) * gridSize;
           newH = Math.round(newH / gridSize) * gridSize;
         }
@@ -995,7 +998,7 @@
         let x = e.clientX - offsetX;
         let y = e.clientY - offsetY;
         if (snapToGrid) {
-          const gridSize = 20 * currentScale;
+          const gridSize = 20;
           x = Math.round(x / gridSize) * gridSize;
           y = Math.round(y / gridSize) * gridSize;
         }
@@ -2128,17 +2131,31 @@
     // -------------------------------
     // SCALE
     // -------------------------------
-    const applyScaleBtn = document.getElementById('applyScaleBtn');
-    applyScaleBtn.addEventListener('click', () => {
-      const scaleVal = parseFloat(document.getElementById('canvasScale').value);
-      if (isNaN(scaleVal) || scaleVal < 0.1 || scaleVal > 5) {
-        alert('Please enter a valid scale between 0.1 and 5.');
-        return;
-      }
-      const sure = confirm('WARNING: Changing the scale will affect layout and may disrupt existing placements. Continue?');
-      if (!sure) return;
-      document.getElementById('scalableContent').setAttribute('transform', `scale(${scaleVal})`);
+    const canvasScaleInput = document.getElementById('canvasScale');
+    const scaleDisplay = document.getElementById('scaleDisplay');
+    const resetScaleBtn = document.getElementById('resetScaleBtn');
+
+    canvasScaleInput.addEventListener('mousedown', () => {
+      previousScale = currentScale;
+    });
+
+    function applyScale(scaleVal) {
+      if (isNaN(scaleVal) || scaleVal <= 0) return;
+      canvasSVG.setAttribute('viewBox', `0 0 ${baseWidth / scaleVal} ${baseHeight / scaleVal}`);
+      canvasSVG.setAttribute('data-canvas-scale', scaleVal);
+      document.getElementById('scalableContent').setAttribute('transform', 'scale(1)');
       currentScale = scaleVal;
+      canvasScaleInput.value = scaleVal;
+      scaleDisplay.textContent = scaleVal.toFixed(1);
+    }
+
+    canvasScaleInput.addEventListener('input', () => {
+      const scaleVal = parseFloat(canvasScaleInput.value);
+      applyScale(scaleVal);
+    });
+
+    resetScaleBtn.addEventListener('click', () => {
+      applyScale(previousScale);
     });
 
     // -------------------------------
@@ -2205,6 +2222,7 @@
         });
 
       canvasSVG.setAttribute('data-facility-id', facilityId); // records the Facility ID
+      canvasSVG.setAttribute('data-canvas-scale', currentScale);
 
       // store layer order
       const groupsForExport = canvasSVG.querySelectorAll('#scalableContent > g');
@@ -2319,17 +2337,31 @@
       if (importedFacilityId) {
         facilityNumberInput.value = importedFacilityId;
         facilityId = parseInt(importedFacilityId, 10) || 1;
-        
+
         // Trigger the 'change' Event to Update Related Elements
         const event = new Event('change');
         facilityNumberInput.dispatchEvent(event);
       }
 
-      const importedTransform = importedScalable.getAttribute("transform");
-      if (importedTransform) {
-        myScalableContent.setAttribute("transform", importedTransform);
+      const importedScale = parseFloat(importedSVG.getAttribute('data-canvas-scale'));
+      if (!isNaN(importedScale)) {
+        applyScale(importedScale);
       } else {
-        myScalableContent.setAttribute("transform", "scale(1)");
+        const importedTransform = importedScalable.getAttribute('transform');
+        let parsedScale = 1;
+        if (importedTransform) {
+          const match = /scale\(([^)]+)\)/.exec(importedTransform);
+          parsedScale = match ? parseFloat(match[1]) || 1 : 1;
+        }
+        const vb = importedSVG.getAttribute('viewBox');
+        if (vb) {
+          const parts = vb.split(/\s+/).map(parseFloat);
+          if (parts.length === 4 && parts[2] && parts[3]) {
+            const wScale = baseWidth / parts[2];
+            parsedScale = wScale;
+          }
+        }
+        applyScale(parsedScale);
       }
 
       const allLoadingTriangles = myScalableContent.querySelectorAll('.loading_triangle');
