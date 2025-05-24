@@ -2156,6 +2156,8 @@
 
     resetScaleBtn.addEventListener('click', () => {
       applyScale(previousScale);
+    });
+
     canvasScaleInput.addEventListener('input', () => {
       const scaleVal = parseFloat(canvasScaleInput.value);
       document.getElementById('scalableContent').setAttribute('transform', `scale(${scaleVal})`);
@@ -2652,4 +2654,3 @@
   ensureLostBoxOnTop();
   rebuildLayersList();
 })();
-})
