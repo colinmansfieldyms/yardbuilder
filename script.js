@@ -2703,11 +2703,9 @@
     const importedFacilityId = importedSVG.getAttribute("data-facility-id");
     if (importedFacilityId) {
       facilityNumberInput.value = importedFacilityId;
+      // Simply update the facilityId variable without triggering the change
+      // event so the imported Lost Box position is preserved
       facilityId = parseInt(importedFacilityId, 10) || 1;
-
-      // Trigger the 'change' Event to Update Related Elements
-      const event = new Event("change");
-      facilityNumberInput.dispatchEvent(event);
     }
 
     const importedScale = parseFloat(
