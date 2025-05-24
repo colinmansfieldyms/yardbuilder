@@ -947,8 +947,8 @@
       currentElement = group;
 
       const [curX, curY] = [oldX, oldY];
-      offsetX = e.clientX - curX;
-      offsetY = e.clientY - curY;
+      offsetX = e.clientX - curX * currentScale;
+      offsetY = e.clientY - curY * currentScale;
 
       group.__undoData = {
         type: 'move',
@@ -970,8 +970,8 @@
           return;
         }
 
-        let dx = e.clientX - startMouseX;
-        let dy = e.clientY - startMouseY;
+        let dx = (e.clientX - startMouseX) / currentScale;
+        let dy = (e.clientY - startMouseY) / currentScale;
         let newW = startWidth + dx;
         let newH = startHeight + dy;
 
@@ -995,8 +995,8 @@
         updateElementSize(currentElement, newW, newH);
 
       } else {
-        let x = e.clientX - offsetX;
-        let y = e.clientY - offsetY;
+        let x = (e.clientX - offsetX) / currentScale;
+        let y = (e.clientY - offsetY) / currentScale;
         if (snapToGrid) {
           const gridSize = 20;
           x = Math.round(x / gridSize) * gridSize;
@@ -2156,6 +2156,20 @@
 
     resetScaleBtn.addEventListener('click', () => {
       applyScale(previousScale);
+    canvasScaleInput.addEventListener('input', () => {
+      const scaleVal = parseFloat(canvasScaleInput.value);
+      document.getElementById('scalableContent').setAttribute('transform', `scale(${scaleVal})`);
+      canvasSVG.setAttribute('data-canvas-scale', scaleVal);
+      currentScale = scaleVal;
+      scaleDisplay.textContent = scaleVal.toFixed(1);
+    });
+
+    resetScaleBtn.addEventListener('click', () => {
+      document.getElementById('scalableContent').setAttribute('transform', `scale(${previousScale})`);
+      canvasSVG.setAttribute('data-canvas-scale', previousScale);
+      currentScale = previousScale;
+      canvasScaleInput.value = previousScale;
+      scaleDisplay.textContent = previousScale.toFixed(1);
     });
 
     // -------------------------------
@@ -2362,6 +2376,26 @@
           }
         }
         applyScale(parsedScale);
+        myScalableContent.setAttribute('transform', `scale(${importedScale})`);
+        currentScale = importedScale;
+        canvasScaleInput.value = importedScale;
+        scaleDisplay.textContent = importedScale.toFixed(1);
+        canvasSVG.setAttribute('data-canvas-scale', importedScale);
+        previousScale = importedScale;
+      } else {
+        const importedTransform = importedScalable.getAttribute('transform');
+        if (importedTransform) {
+          myScalableContent.setAttribute('transform', importedTransform);
+          const match = /scale\(([^)]+)\)/.exec(importedTransform);
+          currentScale = match ? parseFloat(match[1]) || 1 : 1;
+        } else {
+          myScalableContent.setAttribute('transform', 'scale(1)');
+          currentScale = 1;
+        }
+        canvasScaleInput.value = currentScale;
+        scaleDisplay.textContent = currentScale.toFixed(1);
+        canvasSVG.setAttribute('data-canvas-scale', currentScale);
+        previousScale = currentScale;
       }
 
       const allLoadingTriangles = myScalableContent.querySelectorAll('.loading_triangle');
