@@ -1,6 +1,11 @@
-    // =======================================
+(function() {
+"use strict";
+// Main application logic
+
+
+    // -------------------------------
     // UNDO / CTRL+Z Support
-    // =======================================
+    // -------------------------------
     document.addEventListener('keydown', (e) => {
       // Mac users often use metaKey (Command) instead of ctrlKey
       const isUndoKey = (e.ctrlKey || e.metaKey) && e.key === 'z';
@@ -74,9 +79,9 @@
       updateUndoButtonState();
     }
 
-    // =======================================
+    // -------------------------------
     // UNDO BUTTON FUNCTIONALITY
-    // =======================================
+    // -------------------------------
 
     // Select the Undo button
     const undoBtn = document.getElementById('undoBtn');
@@ -103,9 +108,9 @@
     }
     updateUndoButtonState();
 
-    // =======================================
+    // -------------------------------
     // SIDEBAR COLLAPSE
-    // =======================================
+    // -------------------------------
     const sidebar = document.getElementById('sidebar');
     const collapseIcon = document.getElementById('collapseIcon');
     const sidebarHeader = sidebar.querySelector('.sidebar-header');
@@ -114,9 +119,9 @@
       collapseIcon.textContent = sidebar.classList.contains('collapsed') ? '☰' : '✕';
     });
 
-    // =======================================
+    // -------------------------------
     // COLLAPSIBLE MENUS
-    // =======================================
+    // -------------------------------
     document.querySelectorAll('.menu-title').forEach(title => {
       title.addEventListener('click', () => {
         const contentId = title.getAttribute('data-target');
@@ -132,10 +137,10 @@
       });
     });
 
-    // =======================================
+    // -------------------------------
     // SHOW/HIDE LABEL FIELDS FOR "OTHER ELEMENTS"
     //  + CUSTOM IMAGE FIELDS
-    // =======================================
+    // -------------------------------
     const otherElementType    = document.getElementById('otherElementType');
     const labelTextFieldLabel = document.getElementById('labelTextFieldLabel');
     const otherElementLabel   = document.getElementById('otherElementLabel');
@@ -246,9 +251,9 @@
       reader.readAsDataURL(file);
     });
 
-    // =======================================
+    // -------------------------------
     // LIVE PREVIEW FOR LABEL
-    // =======================================
+    // -------------------------------
     function updateLabelPreview() {
       const text   = otherElementLabel.value || '';
       const size   = labelFontSizeRange.value;
@@ -263,9 +268,9 @@
     // Initialize once
     updateLabelPreview();
 
-    // =======================================
+    // -------------------------------
     // YARD SPOTS => SHOW/HIDE FIELDS
-    // =======================================
+    // -------------------------------
     const yardSpotShowNumbers       = document.getElementById('yardSpotShowNumbers');
     const yardSpotNumbersContainer  = document.getElementById('yardSpotNumbersContainer');
     yardSpotShowNumbers.addEventListener('change', () => {
@@ -278,9 +283,9 @@
       yardSpotPrefixSuffixContainer.style.display = (yardSpotPrefixSuffixDropdown.value === 'yes') ? 'block' : 'none';
     });
 
-    // =======================================
+    // -------------------------------
     // DOCK DOORS => SHOW/HIDE FIELDS
-    // =======================================
+    // -------------------------------
     const dockDoorShowNumbers       = document.getElementById('dockDoorShowNumbers');
     const dockDoorNumbersContainer  = document.getElementById('dockDoorNumbersContainer');
     dockDoorShowNumbers.addEventListener('change', () => {
@@ -293,9 +298,9 @@
       dockDoorPrefixSuffixContainer.style.display = (dockDoorPrefixSuffixDropdown.value === 'yes') ? 'block' : 'none';
     });
 
-    // =======================================
+    // -------------------------------
     // ORIENTATION => LABEL LOCATION, NUMBER DIRECTION
-    // =======================================
+    // -------------------------------
     const yardSpotOrientation     = document.getElementById('yardSpotOrientation');
     const yardSpotLabelLocation   = document.getElementById('yardSpotLabelLocation');
     const yardSpotNumberDirection = document.getElementById('yardSpotNumberDirection');
@@ -343,9 +348,9 @@
     onChangeOrientation(yardSpotOrientation, yardSpotLabelLocation, yardSpotNumberDirection);
     onChangeOrientation(dockDoorOrientation, dockDoorLabelLocation, dockDoorNumberDirection);
 
-    // =======================================
+    // -------------------------------
     // LABEL ROTATION => DESCRIPTIONS AS TOOLTIPS
-    // =======================================
+    // -------------------------------
     const yardSpotLabelRotation  = document.getElementById('yardSpotLabelRotation');
     const yardSpotLabelRotTooltip   = document.getElementById('yardSpotLabelRotationTooltip');
     const dockDoorLabelRotation  = document.getElementById('dockDoorLabelRotation');
@@ -391,9 +396,9 @@
       }
     }
 
-    // =======================================
+    // -------------------------------
     // ZONES => TOGGLE "RESIZE EVERY X SPOTS?"
-    // =======================================
+    // -------------------------------
     const zoneAutoResizeCheckbox = document.getElementById('zoneAutoResizeCheckbox');
     const zoneResizeLabel        = document.getElementById('zoneResizeLabel');
     const zoneResizeCount        = document.getElementById('zoneResizeCount');
@@ -403,9 +408,9 @@
       zoneResizeCount.style.display = show ? 'block' : 'none';
     });
 
-    // =======================================
+    // -------------------------------
     // STATE VARS
-    // =======================================
+    // -------------------------------
     let snapToGrid = false;
     let hideTrash  = false;
     let magnetizeEnabled = false;
@@ -546,9 +551,9 @@
       trashCan.style.display = hide ? 'none' : 'block';
     }
 
-    // =======================================
+    // -------------------------------
     // LOST BOX
-    // =======================================
+    // -------------------------------
     const lostBoxTypeSelect = document.getElementById('lostBoxTypeSelect');
     const hideLostBoxToggle = document.getElementById('hideLostBoxToggle');
 
@@ -659,17 +664,17 @@
 
 
 
-    // =======================================
+    // -------------------------------
     // SVG WRAPPER & TRASH
-    // =======================================
+    // -------------------------------
     const svgWrapper = document.getElementById('svgWrapper');
     const canvasSVG  = document.getElementById('canvasSVG');
     const trashCan   = document.getElementById('trashCan');
     const trashImg   = trashCan.querySelector('img');
 
-    // =======================================
+    // -------------------------------
     // Zones Table
-    // =======================================
+    // -------------------------------
     const zonesTableHeader = document.getElementById('zonesTableHeader');
     const zonesTableContent = document.getElementById('zonesTableContent');
     const zonesTableBody    = document.querySelector('#zonesTable tbody');
@@ -756,9 +761,9 @@
     }
 
 
-    // =======================================
+    // -------------------------------
     // Download Excel of Spot and Zone IDs
-    // =======================================
+    // -------------------------------
 
     document.getElementById('exportIdsBtn').addEventListener('click', exportIdsToExcel);
 
@@ -894,9 +899,9 @@
 
 
 
-    // =======================================
+    // -------------------------------
     // DRAG & RESIZE
-    // =======================================
+    // -------------------------------
     let currentElement = null;
     let offsetX = 0;
     let offsetY = 0;
@@ -1227,9 +1232,9 @@
     }
 
 
-    // =======================================
+    // -------------------------------
     // ADD SPOTS / DOCK DOORS
-    // =======================================
+    // -------------------------------
     document.getElementById('addYardSpotsBtn').addEventListener('click', () => {
       const zoneName = document.getElementById('yardSpotZoneName').value.trim();
       if (!zoneName) {
@@ -1581,9 +1586,9 @@
       return `${p1[0]},${p1[1]} ${p2[0]},${p2[1]} ${p3[0]},${p3[1]}`;
     }
 
-    // =======================================
+    // -------------------------------
     // positionLabel()
-    // =======================================
+    // -------------------------------
     function positionLabel(
       label, orientation, labelLocation, w, h,
       offsetX, offsetY, labelText, rotationMode
@@ -1642,9 +1647,9 @@
       }
     }
 
-    // =======================================
+    // -------------------------------
     // CREATE OTHER ELEMENTS (including Custom Image)
-    // =======================================
+    // -------------------------------
     document.getElementById('addOtherElementBtn').addEventListener('click', () => {
       const type    = otherElementType.value;
       const labelTxt= otherElementLabel.value || 'Label';
@@ -1830,9 +1835,9 @@
       group.appendChild(corner);
     }
 
-    // =======================================
+    // -------------------------------
     // CREATE ZONES (with sub-spots)
-    // =======================================
+    // -------------------------------
     const zoneSpotCount  = document.getElementById('zoneSpotCount');
     const zoneName       = document.getElementById('zoneName');
     const zoneType       = document.getElementById('zoneType');
@@ -1997,9 +2002,9 @@
       return { zoneW, zoneH, rows, columns, subW, subH };
     }
 
-    // =======================================
+    // -------------------------------
     // COUNTERS: Total Spots and Docks (Excluding Lost Box)
-    // =======================================
+    // -------------------------------
 
     function updateCounters() {
       // Select all spot groups excluding those with the 'lostTrailer' class
@@ -2039,9 +2044,9 @@
     // Initial call to set counters on page load
     updateCounters();
 
-    // =======================================
+    // -------------------------------
     // Magnetize
-    // =======================================
+    // -------------------------------
     const magnetizeToggle = document.getElementById('magnetizeToggle');
     magnetizeToggle.addEventListener('change', () => {
       magnetizeEnabled = magnetizeToggle.checked;
@@ -2120,9 +2125,9 @@
     }
 
 
-    // =======================================
+    // -------------------------------
     // SCALE
-    // =======================================
+    // -------------------------------
     const applyScaleBtn = document.getElementById('applyScaleBtn');
     applyScaleBtn.addEventListener('click', () => {
       const scaleVal = parseFloat(document.getElementById('canvasScale').value);
@@ -2136,9 +2141,9 @@
       currentScale = scaleVal;
     });
 
-    // =======================================
+    // -------------------------------
     // EXPORT (JPG / SVG)
-    // =======================================
+    // -------------------------------
     const exportJpgBtn = document.getElementById('exportJpgBtn');
     const exportSvgBtn = document.getElementById('exportSvgBtn');
     exportJpgBtn.addEventListener('click', () => {
@@ -2255,9 +2260,9 @@
       allUnloadingTriangles.forEach(tri => tri.style.display = 'none');
     }
 
-    // =======================================
+    // -------------------------------
     // IMPORT
-    // =======================================
+    // -------------------------------
     const chooseSvgBtn = document.getElementById('chooseSvgBtn');
     const importFileInput = document.getElementById('importFileInput');
 
@@ -2586,3 +2591,4 @@
   rebuildLostBox();
   ensureLostBoxOnTop();
   rebuildLayersList();
+})();
