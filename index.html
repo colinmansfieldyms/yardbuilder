@@ -1,593 +1,672 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Eagle View Designer</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Eagle View Designer</title>
 
-  <!-- html2canvas for JPG Export -->
-  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-  <!-- ExcelJS for ID export -->
-  <script src="https://cdn.jsdelivr.net/npm/exceljs@4.3.0/dist/exceljs.min.js"></script>
+    <!-- html2canvas for JPG Export -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <!-- ExcelJS for ID export -->
+    <script src="https://cdn.jsdelivr.net/npm/exceljs@4.3.0/dist/exceljs.min.js"></script>
 
-  <link rel="stylesheet" href="style.css">
-</head>
-<body onselectstart="return false;">
-
-  <!-- TOP BAR -->
-  <div class="top-bar">
-    <div class="bar-left">
-      <img src="https://i.imgur.com/U0zTNSu.png" alt="YMS Logo" />
-      <div class="bar-title">Eagle View Designer</div>
-    </div>
-    <div class="bar-actions" style="display: flex; align-items: center; gap: 1rem;">
-      <!-- Counters Container -->
-      <div id="counters" class="counters" style="display: flex; gap: 1rem; margin-right: auto;">
-        <button id="undoBtn" title="Undo (CTRL/CMD-Z)" aria-label="Undo">
-          <!-- Undo Icon (SVG) -->
-          <svg width="16" height="16" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 5V1L8 5l4 4V6c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/>
-          </svg>
-        </button>
-        <span id="totalSpots">Spots: 0</span>
-        <span id="totalDocks">Docks: 0</span>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body onselectstart="return false;">
+    <!-- TOP BAR -->
+    <div class="top-bar">
+      <div class="bar-left">
+        <img src="https://i.imgur.com/U0zTNSu.png" alt="YMS Logo" />
+        <div class="bar-title">Eagle View Designer</div>
       </div>
-      
-      <!-- Export Buttons -->
-      <button id="exportJpgBtn">Export as JPG</button>
-      <button id="exportSvgBtn">Export as SVG</button>
-    </div>
-  </div>
-
-
-  <!-- MAIN CONTENT WRAPPER -->
-  <div class="body-wrapper" id="bodyWrapper">
-    <!-- SIDEBAR -->
-    <div class="sidebar" id="sidebar">
-      <div class="sidebar-header">
-        <h2>Tools</h2>
-        <span class="collapse-icon" id="collapseIcon">☰</span>
-      </div>
-
-      <!-- FACILITY ID INPUT (inline) -->
-      <div class="facility-inline">
-        <label for="facilityNumberInput" style="white-space: nowrap;">
-          #️⃣ Facility Number:
-        </label>
-        <span class="tooltip-container">
-          <span class="tooltip-text">
-            Please enter which facility this is. For example, if this is the second facility being implemented, enter "2".
-          </span>
-        </span>
-        <input id="facilityNumberInput" type="number" value="1" min="1" />
-      </div>
-
-      <!-- STARTING ZONE NUMBER INPUT (inline) -->
-      <div class="facility-inline">
-        <label for="startingZoneNumberInput" style="white-space: nowrap;">
-          #️⃣ Starting Zone #:
-        </label>
-        <span class="tooltip-container">
-          <span class="tooltip-text">
-            Enter the zone number you want to start from. Changing this value will renumber all existing zones.
-          </span>
-        </span>
-        <input id="startingZoneNumberInput" type="number" value="1" min="1" />
-      </div>
-
-      <!-- Snap to Grid Toggle Section -->
-      <div class="toggle-section">
-        <label for="snapToGridToggle">🔳 Snap to Grid</label>
-        <label class="switch">
-          <input type="checkbox" id="snapToGridToggle">
-          <span class="slider"></span>
-        </label>
-      </div>
-
-      <!-- Magnetize Toggle Section -->
-      <div class="toggle-section">
-        <label for="magnetizeToggle">🧲 Magnetize</label>
-        <label class="switch">
-          <input type="checkbox" id="magnetizeToggle">
-          <span class="slider"></span>
-        </label>
-      </div>
-
-
-      <!-- Hide Trash Toggle Section -->
-      <div class="toggle-section">
-        <label for="hideTrashToggle">🗑️ Hide Trash</label>
-        <label class="switch">
-          <input type="checkbox" id="hideTrashToggle">
-          <span class="slider"></span>
-        </label>
-      </div>
-
-      <!-- YARD SPOTS -->
-      <div class="menu-section">
-        <div class="menu-title" data-target="yardSpotsContent">
-          <h3>Yard Spots</h3><span class="collapse-icon">▼</span>
-        </div>
-        <div class="menu-content" id="yardSpotsContent">
-
-          <!-- Zone Name (at top, subtly highlighted) -->
-          <div class="zone-name-block">
-            <label>
-              Zone Name:
-              <span class="tooltip-container">
-                <span class="tooltip-text">
-                  This is not displayed on Eagle View. Zones are for grouping spots in the system.
-                </span>
-              </span>
-            </label>
-            <input id="yardSpotZoneName" type="text" placeholder="(Required) Enter Zone Name" />
-          </div>
-
-          <label>Number of Spots:</label>
-          <input id="yardSpotCount" type="number" value="3" min="1"/>
-
-          <label>Orientation:</label>
-          <select id="yardSpotOrientation">
-            <option value="horizontal">Horizontal</option>
-            <option value="vertical">Vertical</option>
-          </select>
-
-          <label>Show Numbers?</label>
-          <select id="yardSpotShowNumbers">
-            <option value="yes">Yes</option>
-            <option value="no">No</option>
-          </select>
-
-          <div id="yardSpotNumbersContainer">
-            <label>Start Numbering At:</label>
-            <input id="yardSpotStartNumber" type="number" value="1" min="1" />
-
-            <label>Direction of Numbering:</label>
-            <select id="yardSpotNumberDirection"></select>
-
-            <label>Label Location:</label>
-            <select id="yardSpotLabelLocation"></select>
-
-            <!-- NEW: Label Rotation & Tooltip -->
-            <label id="yardSpotLabelRotationLabel" style="display:none;">
-              Label Rotation:
-              <span class="tooltip-container rotation-tooltip">
-                <span class="tooltip-text" id="yardSpotLabelRotationTooltip">
-                  Select how labels are rotated.
-                </span>
-              </span>
-            </label>
-            <select id="yardSpotLabelRotation" style="display:none;">
-              <option value="dynamic">Dynamic</option>
-              <option value="90">All 90°</option>
-              <option value="none">None</option>
-            </select>
-
-            <label>Add Prefix/Suffix?</label>
-            <select id="yardSpotPrefixSuffixDropdown">
-              <option value="no">No</option>
-              <option value="yes">Yes</option>
-            </select>
-
-            <div id="yardSpotPrefixSuffixContainer" style="display:none;">
-              <label>Spot Prefix:</label>
-              <input id="yardSpotPrefix" type="text" placeholder="e.g. A"/>
-              <label>Spot Suffix:</label>
-              <input id="yardSpotSuffix" type="text" placeholder="e.g. Z"/>
-            </div>
-          </div>
-
-          <button id="addYardSpotsBtn" style="margin-top:1rem;">Add Spots</button>
-        </div>
-      </div>
-
-      <!-- DOCK DOORS -->
-      <div class="menu-section">
-        <div class="menu-title" data-target="dockDoorsContent">
-          <h3>Dock Doors</h3><span class="collapse-icon">▼</span>
-        </div>
-        <div class="menu-content" id="dockDoorsContent">
-
-          <!-- Zone Name (at top, subtly highlighted) -->
-          <div class="zone-name-block">
-            <label>
-              Zone Name:
-              <span class="tooltip-container">
-                <span class="tooltip-text">
-                  This is not displayed on Eagle View. Zones are for grouping spots in the system.
-                </span>
-              </span>
-            </label>
-            <input id="dockDoorZoneName" type="text" placeholder="(Required) Enter Zone Name" />
-          </div>
-
-          <label>Number of Docks:</label>
-          <input id="dockDoorCount" type="number" value="3" min="1"/>
-
-          <label>Orientation:</label>
-          <select id="dockDoorOrientation">
-            <option value="horizontal">Horizontal</option>
-            <option value="vertical">Vertical</option>
-          </select>
-
-          <label>Show Numbers?</label>
-          <select id="dockDoorShowNumbers">
-            <option value="yes">Yes</option>
-            <option value="no">No</option>
-          </select>
-
-          <div id="dockDoorNumbersContainer">
-            <label>Start Numbering At:</label>
-            <input id="dockDoorStartNumber" type="number" value="1" min="1" />
-
-            <label>Direction of Numbering:</label>
-            <select id="dockDoorNumberDirection"></select>
-
-            <label>Label Location:</label>
-            <select id="dockDoorLabelLocation"></select>
-
-            <!-- NEW: Label Rotation & Tooltip -->
-            <label id="dockDoorLabelRotationLabel" style="display:none;">
-              Label Rotation:
-              <span class="tooltip-container rotation-tooltip">
-                <span class="tooltip-text" id="dockDoorLabelRotationTooltip">
-                  Select how labels are rotated.
-                </span>
-              </span>
-            </label>
-            <select id="dockDoorLabelRotation" style="display:none;">
-              <option value="dynamic">Dynamic</option>
-              <option value="90">All 90°</option>
-              <option value="none">None</option>
-            </select>
-
-            <label>Add Prefix/Suffix?</label>
-            <select id="dockDoorPrefixSuffixDropdown">
-              <option value="no">No</option>
-              <option value="yes">Yes</option>
-            </select>
-
-            <div id="dockDoorPrefixSuffixContainer" style="display:none;">
-              <label>Dock Prefix:</label>
-              <input id="dockDoorPrefix" type="text" placeholder="e.g. D"/>
-              <label>Dock Suffix:</label>
-              <input id="dockDoorSuffix" type="text" placeholder="e.g. X"/>
-            </div>
-          </div>
-
-          <button id="addDockDoorsBtn" style="margin-top:1rem;">Add Docks</button>
-        </div>
-      </div>
-
-      <!-- OTHER ELEMENTS -->
-      <div class="menu-section">
-        <div class="menu-title" data-target="otherElementsContent">
-          <h3>Other Elements</h3><span class="collapse-icon">▼</span>
-        </div>
-        <div class="menu-content" id="otherElementsContent">
-          <label>Element Type:</label>
-          <select id="otherElementType">
-            <option value="grass">Grass</option>
-            <option value="building">Building</option>
-            <option value="pavement">Pavement</option>
-            <option value="label">Label</option>
-            <option value="guard_shack">Guard Shack</option>
-            <option value="custom_image">Custom Image</option>
-          </select>
-
-          <label id="otherElementWidthLabel">Width:</label>
-          <input id="otherElementWidth" type="number" value="50" />
-          <label id="otherElementHeightLabel">Height:</label>
-          <input id="otherElementHeight" type="number" value="50" />
-
-          <!-- Label Text Field -->
-          <label id="labelTextFieldLabel" style="display:none;">Label Text:</label>
-          <input 
-            id="otherElementLabel"
-            type="text"
-            placeholder="Type label here"
-            style="display:none;"
-          />
-
-          <!-- NEW: Font Size Slider (only for label) -->
-          <label id="labelFontSizeLabel" style="display:none;">Font Size:</label>
-          <input 
-            type="range" 
-            id="labelFontSizeRange" 
-            min="8" 
-            max="72" 
-            value="16"
-            style="display:none; width: 80%;"
-          />
-
-          <!-- NEW: Color Selector (only for label) -->
-          <label id="labelColorLabel" style="display:none;">Color:</label>
-          <select id="labelColorSelect" style="display:none;">
-            <option value="#000000">Black</option>
-            <option value="#FFFFFF">White</option>
-            <option value="#FF0000">Red</option>
-            <option value="#00FF00">Green</option>
-            <option value="#0000FF">Blue</option>
-            <option value="#FFFF00">Yellow</option>
-            <option value="#FFA500">Orange</option>
-            <option value="#808080">Gray</option>
-          </select>
-
-          <!-- NEW: Preview Label -->
-          <div 
-            id="labelPreviewTitle"
-            style="display:none; margin-top:6px; font-weight:bold;"
-          >
-            Preview
-          </div>
-
-          <!-- NEW: Preview Box -->
-          <div 
-            id="labelPreviewBox"
-            style="
-              display:none;
-              margin-top:4px; 
-              border:1px solid #fff; 
-              padding:4px; 
-              background-color:#A1A3A5; 
-              color:#000;
-              min-height:30px;
-            "
-          >
-            <!-- Updated dynamically -->
-          </div>
-
-          <p id="customImageNote" style="display:none; font-size:0.85rem; color: #ffd700;">
-            Image must be JPG, PNG, or SVG file types. Do not upload images larger than 1MB.
-          </p>
-          <div style="display:flex; align-items:center; gap:0.3rem;">
-            <button id="selectImageBtn" style="display:none;">Select Image</button>
-            <img id="customImagePreview" alt="Preview" />
-          </div>
-          <input id="customImageFileInput" type="file" accept=".jpg,.jpeg,.png,.svg" style="display:none;" />
-
-          <button id="addOtherElementBtn">Add Element</button>
-        </div>
-      </div>
-
-      <!-- ZONES -->
-      <div class="menu-section">
-        <div class="menu-title" data-target="zonesContent">
-          <h3>Zones</h3><span class="collapse-icon">▼</span>
-        </div>
-        <div class="menu-content" id="zonesContent">
-          <div class="zone-name-block">
-            <label>Zone Name:</label>
-            <input id="zoneName" type="text" placeholder="(Required) Enter Zone Name" />
-          </div>
-
-          <label>Number of Spots:</label>
-          <input id="zoneSpotCount" type="number" value="5" min="1"/>
-
-          <label>Zone Type:</label>
-          <select id="zoneType">
-            <option value="horizontal">Horizontal</option>
-            <option value="vertical">Vertical</option>
-          </select>
-
-          <label style="display: flex; align-items: center; gap: 0.5rem;">
-            <input type="checkbox" id="zoneAutoResizeCheckbox" />
-            <span>Auto Resize Zone?</span>
-          </label>
-
-          <label id="zoneResizeLabel" style="display:none;">Resize every how many spots?</label>
-          <input id="zoneResizeCount" type="number" value="10" style="display:none;"/>
-
-          <button id="addZoneBtn">Add Zone</button>
-        </div>
-      </div>
-
-      <!-- LOST BOX (NEW) -->
-      <div class="menu-section">
-        <div class="menu-title" data-target="lostBoxContent">
-          <h3>Lost Box</h3><span class="collapse-icon">▼</span>
-        </div>
-        <div class="menu-content" id="lostBoxContent">
-          <label>Lost Box Type:</label>
-          <select id="lostBoxTypeSelect">
-            <option value="wide">Wide</option>
-            <option value="tall">Tall</option>
-          </select>
-
-          <div class="toggle-section" style="margin-top:1rem;">
-            <label for="hideLostBoxToggle">
-              Hide Lost Box
-              <span class="tooltip-container">
-                <span class="tooltip-text">
-                  The Lost Box must be present in the final Eagle View. 
-                  This option temporarily hides it on the canvas for design flexibility. 
-                  The Lost Box will be shown upon export.
-                </span>
-              </span>
-            </label>
-            <label class="switch">
-              <input type="checkbox" id="hideLostBoxToggle">
-              <span class="slider"></span>
-            </label>
-          </div>
-        </div>
-      </div>
-
-      <!-- ADVANCED (Scale) -->
-      <div class="menu-section"><hr></div>
-      <div class="menu-section">
-        <div class="menu-title" data-target="advancedMenu">
-          <h3>Advanced</h3><span class="collapse-icon">▼</span>
-        </div>
-        <div class="menu-content" id="advancedMenu">
-          <p style="color: #ffd700;">
-            Changing the scale will affect layout and may disrupt existing placements.
-          </p>
-          <label for="canvasScale">Canvas Scale:</label>
-          <div class="scale-control">
-            <input type="range" id="canvasScale" value="1" step="0.1" min="0.5" max="2" />
-            <span id="scaleDisplay">1</span>
-            <button id="resetScaleBtn" title="Revert Scale">↺</button>
-          </div>
-          <p style="margin-top: 1rem; border-top: 1px solid #999; padding-top: 1rem;">
-            <strong>Export IDs</strong>
-          </p>
-          <p>
-            Download an Excel file of all zone and spot IDs.
-          </p>
-          <button id="exportIdsBtn">Download Excel</button>
-        </div>
-      </div>
-
-      <!-- IMPORT -->
-      <div class="menu-section">
-        <div class="menu-title" data-target="importMenu">
-          <h3>Import</h3><span class="collapse-icon">▼</span>
-        </div>
-        <div class="menu-content" id="importMenu">
-          <p>Import a previously exported Eagle View SVG to make updates.</p>
-          <button id="chooseSvgBtn">Choose SVG</button>
-          <input type="file" id="importFileInput" accept=".svg" style="display:none;" />
-        </div>
-      </div>
-    </div>
-
-    <!-- MAIN CONTENT -->
-    <div class="main-content">
-      <!-- MAIN SVG WRAPPER -->
-      <div class="svg-wrapper" id="svgWrapper">
-        <!-- Trash Can (HTML element on top) -->
-        <div class="trash-can" id="trashCan">
-          <img src="https://i.imgur.com/PXejZqX.png" alt="trash can" />
-        </div>
-
-        <!-- Our SVG Canvas -->
-        <svg
-          id="canvasSVG"
-          width="1046.5"
-          height="500"
-          viewBox="0 0 1046.5 500"
-          xmlns="http://www.w3.org/2000/svg"
-          xmlns:xlink="http://www.w3.org/1999/xlink"
+      <div
+        class="bar-actions"
+        style="display: flex; align-items: center; gap: 1rem"
+      >
+        <!-- Counters Container -->
+        <div
+          id="counters"
+          class="counters"
+          style="display: flex; gap: 1rem; margin-right: auto"
         >
-          <!-- Embed styling in defs so it’s included in exported SVG -->
-          <defs>
-            <style><![CDATA[
-              text.spot-label {
-                fill: #fff;
-                font-size: 8.9px;
-                font-family: Helvetica, sans-serif;
-                pointer-events: none; /* don't intercept clicks */
-              }
-              .zone-name-box {
-                fill: #6A6D6E;
-                stroke: #fff;
-                stroke-width: 1;
-                pointer-events: none;
-              }
-              .zone-outline {
-                fill: transparent;
-                stroke: #fff;
-                stroke-width: 1;
-                pointer-events: none;
-              }
-              /* Removed fill: #fff from .label-text so color can be overridden by user choice */
-              .label-text {
-                font-family: Helvetica, sans-serif;
-                pointer-events: none;
-              }
-            ]]></style>
-            <pattern 
-              id="gridPattern" 
-              width="20" 
-              height="20" 
-              patternUnits="userSpaceOnUse"
+          <button id="undoBtn" title="Undo (CTRL/CMD-Z)" aria-label="Undo">
+            <!-- Undo Icon (SVG) -->
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
             >
-              <path d="M20,0 L0,0 0,20" 
-                    fill="none" 
-                    stroke="#bbb" 
-                    stroke-width="1"
-                    opacity="0.4" />
-            </pattern>
-          </defs>
+              <path
+                d="M12 5V1L8 5l4 4V6c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"
+              />
+            </svg>
+          </button>
+          <span id="totalSpots">Spots: 0</span>
+          <span id="totalDocks">Docks: 0</span>
+        </div>
 
-          <!-- Gray background -->
-          <rect 
-            class="grid-rect"
-            x="0" 
-            y="0" 
-            width="1046.5" 
-            height="500" 
-            fill="#A1A3A5"
-          />
+        <!-- Export Buttons -->
+        <button id="exportJpgBtn">Export as JPG</button>
+        <button id="exportSvgBtn">Export as SVG</button>
+      </div>
+    </div>
 
-          <!-- Grid overlay rect (for in-app usage, not desired in final exported SVG) -->
-          <rect
-            class="grid-overlay"
-            x="0"
-            y="0"
+    <!-- MAIN CONTENT WRAPPER -->
+    <div class="body-wrapper" id="bodyWrapper">
+      <!-- SIDEBAR -->
+      <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+          <h2>Tools</h2>
+          <span class="collapse-icon" id="collapseIcon">☰</span>
+        </div>
+
+        <!-- FACILITY ID INPUT (inline) -->
+        <div class="facility-inline">
+          <label for="facilityNumberInput" style="white-space: nowrap">
+            #️⃣ Facility Number:
+          </label>
+          <span class="tooltip-container">
+            <span class="tooltip-text">
+              Please enter which facility this is. For example, if this is the
+              second facility being implemented, enter "2".
+            </span>
+          </span>
+          <input id="facilityNumberInput" type="number" value="1" min="1" />
+        </div>
+
+        <!-- STARTING ZONE NUMBER INPUT (inline) -->
+        <div class="facility-inline">
+          <label for="startingZoneNumberInput" style="white-space: nowrap">
+            #️⃣ Starting Zone #:
+          </label>
+          <span class="tooltip-container">
+            <span class="tooltip-text">
+              Enter the zone number you want to start from. Changing this value
+              will renumber all existing zones.
+            </span>
+          </span>
+          <input id="startingZoneNumberInput" type="number" value="1" min="1" />
+        </div>
+
+        <!-- Snap to Grid Toggle Section -->
+        <div class="toggle-section">
+          <label for="snapToGridToggle">🔳 Snap to Grid</label>
+          <label class="switch">
+            <input type="checkbox" id="snapToGridToggle" />
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <!-- Magnetize Toggle Section -->
+        <div class="toggle-section">
+          <label for="magnetizeToggle">🧲 Magnetize</label>
+          <label class="switch">
+            <input type="checkbox" id="magnetizeToggle" />
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <!-- Hide Trash Toggle Section -->
+        <div class="toggle-section">
+          <label for="hideTrashToggle">🗑️ Hide Trash</label>
+          <label class="switch">
+            <input type="checkbox" id="hideTrashToggle" />
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <!-- YARD SPOTS -->
+        <div class="menu-section">
+          <div class="menu-title" data-target="yardSpotsContent">
+            <h3>Yard Spots</h3>
+            <span class="collapse-icon">▼</span>
+          </div>
+          <div class="menu-content" id="yardSpotsContent">
+            <!-- Zone Name (at top, subtly highlighted) -->
+            <div class="zone-name-block">
+              <label>
+                Zone Name:
+                <span class="tooltip-container">
+                  <span class="tooltip-text">
+                    This is not displayed on Eagle View. Zones are for grouping
+                    spots in the system.
+                  </span>
+                </span>
+              </label>
+              <input
+                id="yardSpotZoneName"
+                type="text"
+                placeholder="(Required) Enter Zone Name"
+              />
+            </div>
+
+            <label>Number of Spots:</label>
+            <input id="yardSpotCount" type="number" value="3" min="1" />
+
+            <label>Orientation:</label>
+            <select id="yardSpotOrientation">
+              <option value="horizontal">Horizontal</option>
+              <option value="vertical">Vertical</option>
+            </select>
+
+            <label>Show Numbers?</label>
+            <select id="yardSpotShowNumbers">
+              <option value="yes">Yes</option>
+              <option value="no">No</option>
+            </select>
+
+            <div id="yardSpotNumbersContainer">
+              <label>Start Numbering At:</label>
+              <input id="yardSpotStartNumber" type="number" value="1" min="1" />
+
+              <label>Direction of Numbering:</label>
+              <select id="yardSpotNumberDirection"></select>
+
+              <label>Label Location:</label>
+              <select id="yardSpotLabelLocation"></select>
+
+              <!-- NEW: Label Rotation & Tooltip -->
+              <label id="yardSpotLabelRotationLabel" style="display: none">
+                Label Rotation:
+                <span class="tooltip-container rotation-tooltip">
+                  <span class="tooltip-text" id="yardSpotLabelRotationTooltip">
+                    Select how labels are rotated.
+                  </span>
+                </span>
+              </label>
+              <select id="yardSpotLabelRotation" style="display: none">
+                <option value="dynamic">Dynamic</option>
+                <option value="90">All 90°</option>
+                <option value="none">None</option>
+              </select>
+
+              <label>Add Prefix/Suffix?</label>
+              <select id="yardSpotPrefixSuffixDropdown">
+                <option value="no">No</option>
+                <option value="yes">Yes</option>
+              </select>
+
+              <div id="yardSpotPrefixSuffixContainer" style="display: none">
+                <label>Spot Prefix:</label>
+                <input id="yardSpotPrefix" type="text" placeholder="e.g. A" />
+                <label>Spot Suffix:</label>
+                <input id="yardSpotSuffix" type="text" placeholder="e.g. Z" />
+              </div>
+            </div>
+
+            <button id="addYardSpotsBtn" style="margin-top: 1rem">
+              Add Spots
+            </button>
+          </div>
+        </div>
+
+        <!-- DOCK DOORS -->
+        <div class="menu-section">
+          <div class="menu-title" data-target="dockDoorsContent">
+            <h3>Dock Doors</h3>
+            <span class="collapse-icon">▼</span>
+          </div>
+          <div class="menu-content" id="dockDoorsContent">
+            <!-- Zone Name (at top, subtly highlighted) -->
+            <div class="zone-name-block">
+              <label>
+                Zone Name:
+                <span class="tooltip-container">
+                  <span class="tooltip-text">
+                    This is not displayed on Eagle View. Zones are for grouping
+                    spots in the system.
+                  </span>
+                </span>
+              </label>
+              <input
+                id="dockDoorZoneName"
+                type="text"
+                placeholder="(Required) Enter Zone Name"
+              />
+            </div>
+
+            <label>Number of Docks:</label>
+            <input id="dockDoorCount" type="number" value="3" min="1" />
+
+            <label>Orientation:</label>
+            <select id="dockDoorOrientation">
+              <option value="horizontal">Horizontal</option>
+              <option value="vertical">Vertical</option>
+            </select>
+
+            <label>Show Numbers?</label>
+            <select id="dockDoorShowNumbers">
+              <option value="yes">Yes</option>
+              <option value="no">No</option>
+            </select>
+
+            <div id="dockDoorNumbersContainer">
+              <label>Start Numbering At:</label>
+              <input id="dockDoorStartNumber" type="number" value="1" min="1" />
+
+              <label>Direction of Numbering:</label>
+              <select id="dockDoorNumberDirection"></select>
+
+              <label>Label Location:</label>
+              <select id="dockDoorLabelLocation"></select>
+
+              <!-- NEW: Label Rotation & Tooltip -->
+              <label id="dockDoorLabelRotationLabel" style="display: none">
+                Label Rotation:
+                <span class="tooltip-container rotation-tooltip">
+                  <span class="tooltip-text" id="dockDoorLabelRotationTooltip">
+                    Select how labels are rotated.
+                  </span>
+                </span>
+              </label>
+              <select id="dockDoorLabelRotation" style="display: none">
+                <option value="dynamic">Dynamic</option>
+                <option value="90">All 90°</option>
+                <option value="none">None</option>
+              </select>
+
+              <label>Add Prefix/Suffix?</label>
+              <select id="dockDoorPrefixSuffixDropdown">
+                <option value="no">No</option>
+                <option value="yes">Yes</option>
+              </select>
+
+              <div id="dockDoorPrefixSuffixContainer" style="display: none">
+                <label>Dock Prefix:</label>
+                <input id="dockDoorPrefix" type="text" placeholder="e.g. D" />
+                <label>Dock Suffix:</label>
+                <input id="dockDoorSuffix" type="text" placeholder="e.g. X" />
+              </div>
+            </div>
+
+            <button id="addDockDoorsBtn" style="margin-top: 1rem">
+              Add Docks
+            </button>
+          </div>
+        </div>
+
+        <!-- OTHER ELEMENTS -->
+        <div class="menu-section">
+          <div class="menu-title" data-target="otherElementsContent">
+            <h3>Other Elements</h3>
+            <span class="collapse-icon">▼</span>
+          </div>
+          <div class="menu-content" id="otherElementsContent">
+            <label>Element Type:</label>
+            <select id="otherElementType">
+              <option value="grass">Grass</option>
+              <option value="building">Building</option>
+              <option value="pavement">Pavement</option>
+              <option value="label">Label</option>
+              <option value="guard_shack">Guard Shack</option>
+              <option value="custom_image">Custom Image</option>
+            </select>
+
+            <label id="otherElementWidthLabel">Width:</label>
+            <input id="otherElementWidth" type="number" value="50" />
+            <label id="otherElementHeightLabel">Height:</label>
+            <input id="otherElementHeight" type="number" value="50" />
+
+            <!-- Label Text Field -->
+            <label id="labelTextFieldLabel" style="display: none"
+              >Label Text:</label
+            >
+            <input
+              id="otherElementLabel"
+              type="text"
+              placeholder="Type label here"
+              style="display: none"
+            />
+
+            <!-- NEW: Font Size Slider (only for label) -->
+            <label id="labelFontSizeLabel" style="display: none"
+              >Font Size:</label
+            >
+            <input
+              type="range"
+              id="labelFontSizeRange"
+              min="8"
+              max="72"
+              value="16"
+              style="display: none; width: 80%"
+            />
+
+            <!-- NEW: Color Selector (only for label) -->
+            <label id="labelColorLabel" style="display: none">Color:</label>
+            <select id="labelColorSelect" style="display: none">
+              <option value="#000000">Black</option>
+              <option value="#FFFFFF">White</option>
+              <option value="#FF0000">Red</option>
+              <option value="#00FF00">Green</option>
+              <option value="#0000FF">Blue</option>
+              <option value="#FFFF00">Yellow</option>
+              <option value="#FFA500">Orange</option>
+              <option value="#808080">Gray</option>
+            </select>
+
+            <!-- NEW: Preview Label -->
+            <div
+              id="labelPreviewTitle"
+              style="display: none; margin-top: 6px; font-weight: bold"
+            >
+              Preview
+            </div>
+
+            <!-- NEW: Preview Box -->
+            <div
+              id="labelPreviewBox"
+              style="
+                display: none;
+                margin-top: 4px;
+                border: 1px solid #fff;
+                padding: 4px;
+                background-color: #a1a3a5;
+                color: #000;
+                min-height: 30px;
+              "
+            >
+              <!-- Updated dynamically -->
+            </div>
+
+            <p
+              id="customImageNote"
+              style="display: none; font-size: 0.85rem; color: #ffd700"
+            >
+              Image must be JPG, PNG, or SVG file types. Do not upload images
+              larger than 1MB.
+            </p>
+            <div style="display: flex; align-items: center; gap: 0.3rem">
+              <button id="selectImageBtn" style="display: none">
+                Select Image
+              </button>
+              <img id="customImagePreview" alt="Preview" />
+            </div>
+            <input
+              id="customImageFileInput"
+              type="file"
+              accept=".jpg,.jpeg,.png,.svg"
+              style="display: none"
+            />
+
+            <button id="addOtherElementBtn">Add Element</button>
+          </div>
+        </div>
+
+        <!-- ZONES -->
+        <div class="menu-section">
+          <div class="menu-title" data-target="zonesContent">
+            <h3>Zones</h3>
+            <span class="collapse-icon">▼</span>
+          </div>
+          <div class="menu-content" id="zonesContent">
+            <div class="zone-name-block">
+              <label>Zone Name:</label>
+              <input
+                id="zoneName"
+                type="text"
+                placeholder="(Required) Enter Zone Name"
+              />
+            </div>
+
+            <label>Number of Spots:</label>
+            <input id="zoneSpotCount" type="number" value="5" min="1" />
+
+            <label>Zone Type:</label>
+            <select id="zoneType">
+              <option value="horizontal">Horizontal</option>
+              <option value="vertical">Vertical</option>
+            </select>
+
+            <label style="display: flex; align-items: center; gap: 0.5rem">
+              <input type="checkbox" id="zoneAutoResizeCheckbox" />
+              <span>Auto Resize Zone?</span>
+            </label>
+
+            <label id="zoneResizeLabel" style="display: none"
+              >Resize every how many spots?</label
+            >
+            <input
+              id="zoneResizeCount"
+              type="number"
+              value="10"
+              style="display: none"
+            />
+
+            <button id="addZoneBtn">Add Zone</button>
+          </div>
+        </div>
+
+        <!-- LOST BOX (NEW) -->
+        <div class="menu-section">
+          <div class="menu-title" data-target="lostBoxContent">
+            <h3>Lost Box</h3>
+            <span class="collapse-icon">▼</span>
+          </div>
+          <div class="menu-content" id="lostBoxContent">
+            <label>Lost Box Type:</label>
+            <select id="lostBoxTypeSelect">
+              <option value="wide">Wide</option>
+              <option value="tall">Tall</option>
+            </select>
+
+            <div class="toggle-section" style="margin-top: 1rem">
+              <label for="hideLostBoxToggle">
+                Hide Lost Box
+                <span class="tooltip-container">
+                  <span class="tooltip-text">
+                    The Lost Box must be present in the final Eagle View. This
+                    option temporarily hides it on the canvas for design
+                    flexibility. The Lost Box will be shown upon export.
+                  </span>
+                </span>
+              </label>
+              <label class="switch">
+                <input type="checkbox" id="hideLostBoxToggle" />
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- ADVANCED (Scale) -->
+        <div class="menu-section"><hr /></div>
+        <div class="menu-section">
+          <div class="menu-title" data-target="advancedMenu">
+            <h3>Advanced</h3>
+            <span class="collapse-icon">▼</span>
+          </div>
+          <div class="menu-content" id="advancedMenu">
+            <p style="color: #ffd700">
+              Changing the scale will affect layout and may disrupt existing
+              placements.
+            </p>
+            <label for="canvasScale">Canvas Scale:</label>
+            <div class="scale-control">
+              <input
+                type="range"
+                id="canvasScale"
+                value="1"
+                step="0.1"
+                min="0.5"
+                max="2"
+              />
+              <span id="scaleDisplay">1</span>
+              <button id="resetScaleBtn" title="Revert Scale">↺</button>
+            </div>
+            <p
+              style="
+                margin-top: 1rem;
+                border-top: 1px solid #999;
+                padding-top: 1rem;
+              "
+            >
+              <strong>Export IDs</strong>
+            </p>
+            <p>Download an Excel file of all zone and spot IDs.</p>
+            <button id="exportIdsBtn">Download Excel</button>
+          </div>
+        </div>
+
+        <!-- IMPORT -->
+        <div class="menu-section">
+          <div class="menu-title" data-target="importMenu">
+            <h3>Import</h3>
+            <span class="collapse-icon">▼</span>
+          </div>
+          <div class="menu-content" id="importMenu">
+            <p>Import a previously exported Eagle View SVG to make updates.</p>
+            <button id="chooseSvgBtn">Choose SVG</button>
+            <input
+              type="file"
+              id="importFileInput"
+              accept=".svg"
+              style="display: none"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- MAIN CONTENT -->
+      <div class="main-content">
+        <!-- MAIN SVG WRAPPER -->
+        <div class="svg-wrapper" id="svgWrapper">
+          <!-- Trash Can (HTML element on top) -->
+          <div class="trash-can" id="trashCan">
+            <img src="https://i.imgur.com/PXejZqX.png" alt="trash can" />
+          </div>
+
+          <!-- Our SVG Canvas -->
+          <svg
+            id="canvasSVG"
             width="1046.5"
             height="500"
-            fill="url(#gridPattern)"
-            opacity="1"
-          />
+            viewBox="0 0 1046.5 500"
+            xmlns="http://www.w3.org/2000/svg"
+            xmlns:xlink="http://www.w3.org/1999/xlink"
+          >
+            <!-- Embed styling in defs so it’s included in exported SVG -->
+            <defs>
+              <style>
+                <![CDATA[
+                              text.spot-label {
+                                fill: #fff;
+                                font-size: 8.9px;
+                                font-family: Helvetica, sans-serif;
+                                pointer-events: none; /* don't intercept clicks */
+                              }
+                              .zone-name-box {
+                                fill: #6A6D6E;
+                                stroke: #fff;
+                                stroke-width: 1;
+                                pointer-events: none;
+                              }
+                              .zone-outline {
+                                fill: transparent;
+                                stroke: #fff;
+                                stroke-width: 1;
+                                pointer-events: none;
+                              }
+                              /* Removed fill: #fff from .label-text so color can be overridden by user choice */
+                              .label-text {
+                                font-family: Helvetica, sans-serif;
+                                pointer-events: none;
+                              }
+                            ]]>
+              </style>
+              <pattern
+                id="gridPattern"
+                width="20"
+                height="20"
+                patternUnits="userSpaceOnUse"
+              >
+                <path
+                  d="M20,0 L0,0 0,20"
+                  fill="none"
+                  stroke="#bbb"
+                  stroke-width="1"
+                  opacity="0.4"
+                />
+              </pattern>
+            </defs>
 
-          <!-- Draggable items go here -->
-          <g id="scalableContent" transform="scale(1)">
-          </g>
-        </svg>
+            <!-- Gray background -->
+            <rect
+              class="grid-rect"
+              x="0"
+              y="0"
+              width="1046.5"
+              height="500"
+              fill="#A1A3A5"
+            />
+
+            <!-- Grid overlay rect (for in-app usage, not desired in final exported SVG) -->
+            <rect
+              class="grid-overlay"
+              x="0"
+              y="0"
+              width="1046.5"
+              height="500"
+              fill="url(#gridPattern)"
+              opacity="1"
+            />
+
+            <!-- Draggable items go here -->
+            <g id="scalableContent" transform="scale(1)"></g>
+          </svg>
+        </div>
+
+        <!-- NEW FEATURE: Zones Table -->
+        <div class="zones-table-wrapper" id="zonesTableWrapper">
+          <div class="zones-table-header" id="zonesTableHeader">
+            <h3>Zones List</h3>
+            <span class="collapse-icon">▼</span>
+          </div>
+          <div class="zones-table-content" id="zonesTableContent">
+            <table id="zonesTable">
+              <thead>
+                <tr>
+                  <th>Zone Name</th>
+                  <th>Zone ID</th>
+                  <th>Number of Spots / Docks</th>
+                  <th>Spot / Dock IDs</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Zone names will be added here -->
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
 
-      <!-- NEW FEATURE: Zones Table -->
-      <div class="zones-table-wrapper" id="zonesTableWrapper">
-        <div class="zones-table-header" id="zonesTableHeader">
-          <h3>Zones List</h3>
-          <span class="collapse-icon">▼</span>
+      <!-- Layers Sidebar -->
+      <div class="layers-sidebar collapsed" id="layersSidebar">
+        <div class="layers-header" id="layersHeader">
+          <h3>Layers</h3>
+          <span class="collapse-icon" id="layersCollapseIcon">☰</span>
         </div>
-        <div class="zones-table-content" id="zonesTableContent">
-          <table id="zonesTable">
-            <thead>
-              <tr>
-                <th>Zone Name</th>
-                <th>Zone ID</th>
-                <th>Number of Spots / Docks</th>
-                <th>Spot / Dock IDs</th>
-              </tr>
-            </thead>
-            <tbody>
-              <!-- Zone names will be added here -->
-            </tbody>
-          </table>
-        </div>
+        <ul id="layersList"></ul>
       </div>
+    </div>
+    <!-- End of body-wrapper -->
 
+    <!-- FOOTER -->
+    <div class="footer">
+      Made with ☕️ by
+      <a href="https://yardmanagementsoftware.com" target="_blank"
+        >Yard Management Solutions</a
+      >
     </div>
 
-    <!-- Layers Sidebar -->
-    <div class="layers-sidebar collapsed" id="layersSidebar">
-      <div class="layers-header" id="layersHeader">
-        <h3>Layers</h3>
-        <span class="collapse-icon" id="layersCollapseIcon">☰</span>
-      </div>
-      <ul id="layersList"></ul>
-    </div>
+    <ul id="layerContextMenu">
+      <li data-action="bring-front">Send to Front</li>
+      <li data-action="bring-forward">Send Forward</li>
+      <li data-action="send-backward">Send Backward</li>
+      <li data-action="send-back">Send to Back</li>
+      <li data-action="delete">Delete</li>
+    </ul>
 
-  </div> <!-- End of body-wrapper -->
-
-  <!-- FOOTER -->
-  <div class="footer">
-    Made with ☕️ by
-    <a href="https://yardmanagementsoftware.com" target="_blank">Yard Management Solutions</a>
-  </div>
-
-  <ul id="layerContextMenu">
-    <li data-action="bring-front">Send to Front</li>
-    <li data-action="bring-forward">Send Forward</li>
-    <li data-action="send-backward">Send Backward</li>
-    <li data-action="send-back">Send to Back</li>
-    <li data-action="delete">Delete</li>
-  </ul>
-
-  <script src="script.js"></script>
-</body>
+    <script src="script.js"></script>
+  </body>
 </html>
