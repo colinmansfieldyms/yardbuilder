@@ -2652,3 +2652,4 @@
   ensureLostBoxOnTop();
   rebuildLayersList();
 })();
+})
