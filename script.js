@@ -2518,17 +2518,17 @@
 
   function getLayerIcon(g) {
     if (g.querySelector('g.eagleViewDropSpot')) {
-      return g.querySelector('.loading_triangle') ? '🚚' : '🚛';
+      return g.querySelector('.loading_triangle') ? '🚪' : '🚛';
     }
     if (g.classList.contains('lostTrailer')) return '❌';
-    if (g.getAttribute('data-zone') === 'yes') return '📦';
+    if (g.getAttribute('data-zone') === 'yes') return '📥';
     const main = g.querySelector('[data-role="main"]');
     if (main) {
-      if (main.getAttribute('data-guard') === 'yes') return '🚓';
+      if (main.getAttribute('data-guard') === 'yes') return '👮🏻‍♂️';
       if (main.tagName === 'image') return '🖼️';
       const fill = main.getAttribute('fill');
       if (fill === '#63954B') return '🌱';
-      if (fill === '#fff') return '🏠';
+      if (fill === '#fff') return '🏢';
       if (fill === '#A1A3A5') return '⬛';
     }
     if (g.querySelector('text')) return '🔤';
