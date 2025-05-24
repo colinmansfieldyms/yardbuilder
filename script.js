@@ -1123,8 +1123,12 @@
         x = Math.round(x / gridSize) * gridSize;
         y = Math.round(y / gridSize) * gridSize;
       }
-      x = Math.max(0, Math.min(x, 1046.5 - 10));
-      y = Math.max(0, Math.min(y, 500 - 10));
+      const maxX =
+        currentScale < 1 ? baseWidth / currentScale - 10 : baseWidth - 10;
+      const maxY =
+        currentScale < 1 ? baseHeight / currentScale - 10 : baseHeight - 10;
+      x = Math.max(0, Math.min(x, maxX));
+      y = Math.max(0, Math.min(y, maxY));
 
       if (magnetizeEnabled) {
         [x, y] = magnetizePosition(currentElement, x, y);
@@ -2699,11 +2703,9 @@
     const importedFacilityId = importedSVG.getAttribute("data-facility-id");
     if (importedFacilityId) {
       facilityNumberInput.value = importedFacilityId;
+      // Simply update the facilityId variable without triggering the change
+      // event so the imported Lost Box position is preserved
       facilityId = parseInt(importedFacilityId, 10) || 1;
-
-      // Trigger the 'change' Event to Update Related Elements
-      const event = new Event("change");
-      facilityNumberInput.dispatchEvent(event);
     }
 
     const importedScale = parseFloat(
