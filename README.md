@@ -22,12 +22,13 @@ This site is not intended for public use and should be considered an **internal 
 
 ## 🧰 Core Features
 
-- **Drag-and-Drop Interface**: Easily add and move visual yard elements like trailers, doors, docks, containers, and more.
-- **Element Customization**: Click on elements to rename them, change colors, or adjust orientations.
+- **Drag-and-Drop Interface**: Easily add and move visual yard elements like yard spots, docks, grass, buildings and more.
+- **Element Customization**: Resize elements and change layer order.
 - **Undo/Redo Support**: Mistakes can be quickly reversed or reapplied for fast editing.
-- **Save/Export JSON**: Download your yard configuration as a JSON file, ready for import into Eagle View or further development.
-- **Load Configuration**: Upload a previously saved JSON layout to continue editing or reviewing.
-- **Flexible Canvas**: Pan and zoom around the yard layout to accommodate large or complex designs.
+- **Save/Export SVG/JPG**: Download your yard configuration as a SVG or JPG file. 
+- **Import SVG**: Upload a previously saved SVG layout to continue editing or reviewing. All layers and customizations remain intact.
+- **Export IDs**: Save time by exporting all IDs as an Excel file to easily add to the database.
+- **Flexible Canvas**: Change the scale of the yard layout to accommodate large or complex designs.
 
 ---
 
