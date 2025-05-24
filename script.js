@@ -416,6 +416,8 @@
     let magnetizeEnabled = false;
     let currentScale = 1;
     let previousScale = 1;
+    const baseWidth = 1046.5;
+    const baseHeight = 500;
 
     let facilityId = 1;
     let nextSpotSequence = 1;
@@ -2137,6 +2139,23 @@
       previousScale = currentScale;
     });
 
+    function applyScale(scaleVal) {
+      if (isNaN(scaleVal) || scaleVal <= 0) return;
+      canvasSVG.setAttribute('viewBox', `0 0 ${baseWidth / scaleVal} ${baseHeight / scaleVal}`);
+      canvasSVG.setAttribute('data-canvas-scale', scaleVal);
+      document.getElementById('scalableContent').setAttribute('transform', 'scale(1)');
+      currentScale = scaleVal;
+      canvasScaleInput.value = scaleVal;
+      scaleDisplay.textContent = scaleVal.toFixed(1);
+    }
+
+    canvasScaleInput.addEventListener('input', () => {
+      const scaleVal = parseFloat(canvasScaleInput.value);
+      applyScale(scaleVal);
+    });
+
+    resetScaleBtn.addEventListener('click', () => {
+      applyScale(previousScale);
     canvasScaleInput.addEventListener('input', () => {
       const scaleVal = parseFloat(canvasScaleInput.value);
       document.getElementById('scalableContent').setAttribute('transform', `scale(${scaleVal})`);
@@ -2340,6 +2359,23 @@
 
       const importedScale = parseFloat(importedSVG.getAttribute('data-canvas-scale'));
       if (!isNaN(importedScale)) {
+        applyScale(importedScale);
+      } else {
+        const importedTransform = importedScalable.getAttribute('transform');
+        let parsedScale = 1;
+        if (importedTransform) {
+          const match = /scale\(([^)]+)\)/.exec(importedTransform);
+          parsedScale = match ? parseFloat(match[1]) || 1 : 1;
+        }
+        const vb = importedSVG.getAttribute('viewBox');
+        if (vb) {
+          const parts = vb.split(/\s+/).map(parseFloat);
+          if (parts.length === 4 && parts[2] && parts[3]) {
+            const wScale = baseWidth / parts[2];
+            parsedScale = wScale;
+          }
+        }
+        applyScale(parsedScale);
         myScalableContent.setAttribute('transform', `scale(${importedScale})`);
         currentScale = importedScale;
         canvasScaleInput.value = importedScale;
