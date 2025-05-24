@@ -538,7 +538,11 @@
   const layersCollapseIcon = document.getElementById("layersCollapseIcon");
   const layersList = document.getElementById("layersList");
   const layerContextMenu = document.getElementById("layerContextMenu");
+  const contextAdd = document.getElementById("contextAdd");
+  const contextRemove = document.getElementById("contextRemove");
+  const contextEditFirst = document.getElementById("contextEditFirst");
   let contextTarget = null;
+  let contextType = null; // 'dock' or 'spot'
   document
     .getElementById("bodyWrapper")
     .classList.toggle(
@@ -2984,6 +2988,25 @@
       if (!g || g.classList.contains("lostTrailer")) return;
       e.preventDefault();
       contextTarget = g;
+      const sampleSpot = g.querySelector("g.eagleViewDropSpot");
+      if (sampleSpot) {
+        const hasTriangle =
+          sampleSpot.querySelector(".loading_triangle") ||
+          sampleSpot.querySelector(".unloading_triangle");
+        contextType = hasTriangle ? "dock" : "spot";
+        contextAdd.textContent =
+          contextType === "dock" ? "⊕ Add Docks" : "⊕ Add Spots";
+        contextRemove.textContent =
+          contextType === "dock" ? "⊖ Remove Docks" : "⊖ Remove Spots";
+        contextAdd.style.display = "block";
+        contextRemove.style.display = "block";
+        contextEditFirst.style.display = "block";
+      } else {
+        contextType = null;
+        contextAdd.style.display = "none";
+        contextRemove.style.display = "none";
+        contextEditFirst.style.display = "none";
+      }
       layerContextMenu.style.display = "block";
       layerContextMenu.style.left = e.clientX + "px";
       layerContextMenu.style.top = e.clientY + "px";
@@ -2997,6 +3020,25 @@
       `#scalableContent > g[data-layer-id="${li.dataset.targetId}"]`,
     );
     if (!contextTarget) return;
+    const sampleSpot = contextTarget.querySelector("g.eagleViewDropSpot");
+    if (sampleSpot) {
+      const hasTriangle =
+        sampleSpot.querySelector(".loading_triangle") ||
+        sampleSpot.querySelector(".unloading_triangle");
+      contextType = hasTriangle ? "dock" : "spot";
+      contextAdd.textContent =
+        contextType === "dock" ? "⊕ Add Docks" : "⊕ Add Spots";
+      contextRemove.textContent =
+        contextType === "dock" ? "⊖ Remove Docks" : "⊖ Remove Spots";
+      contextAdd.style.display = "block";
+      contextRemove.style.display = "block";
+      contextEditFirst.style.display = "block";
+    } else {
+      contextType = null;
+      contextAdd.style.display = "none";
+      contextRemove.style.display = "none";
+      contextEditFirst.style.display = "none";
+    }
     layerContextMenu.style.display = "block";
     layerContextMenu.style.left = e.clientX + "px";
     layerContextMenu.style.top = e.clientY + "px";
@@ -3024,12 +3066,165 @@
     } else if (action === "delete") {
       deleteGroupDirect(contextTarget);
       contextTarget = null;
+    } else if (action === "add-items") {
+      if (!contextType) return;
+      const num = parseInt(
+        prompt(
+          `Add how many ${contextType === "dock" ? "docks" : "spots"}?`,
+          "1",
+        ),
+        10,
+      );
+      if (Number.isNaN(num) || num <= 0) return;
+      addItems(contextTarget, num, contextType === "dock");
+    } else if (action === "remove-items") {
+      if (!contextType) return;
+      const num = parseInt(
+        prompt(
+          `Remove how many ${contextType === "dock" ? "docks" : "spots"}?`,
+          "1",
+        ),
+        10,
+      );
+      if (Number.isNaN(num) || num <= 0) return;
+      removeItems(contextTarget, num);
+    } else if (action === "edit-first") {
+      editFirstNumber(contextTarget);
     }
     ensureLostBoxOnTop();
     layerContextMenu.style.display = "none";
     ensureLostBoxOnTop();
     rebuildLayersList();
+    rebuildZonesTable();
+    updateCounters();
   });
+
+  function addItems(group, count, isDock) {
+    const spots = group.querySelectorAll("g.eagleViewDropSpot");
+    if (!spots.length) return;
+    const firstRect = spots[0].querySelector("rect");
+    const spotW = parseFloat(firstRect.getAttribute("width"));
+    const spotH = parseFloat(firstRect.getAttribute("height"));
+    const orientation =
+      parseFloat(group.getAttribute("data-w")) >
+      parseFloat(group.getAttribute("data-h"))
+        ? "vertical"
+        : "horizontal";
+    for (let i = 0; i < count; i++) {
+      const idx = spots.length + i;
+      const seq = getNextSpotSequence();
+      const spotId = buildSpotId(facilityId, seq);
+      const sg = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      sg.setAttribute("class", "droppable eagleViewDropSpot");
+      sg.setAttribute(
+        "data-zone-name",
+        group.getAttribute("data-zone-name") || "",
+      );
+      if (group.getAttribute("data-zone-id")) {
+        sg.setAttribute("data-zone-id", group.getAttribute("data-zone-id"));
+      }
+      sg.setAttribute("data-sequence", seq);
+      sg.setAttribute("data-spot-id", spotId);
+      const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      const x = orientation === "vertical" ? idx * spotW : 0;
+      const y = orientation === "horizontal" ? idx * spotH : 0;
+      r.setAttribute("x", x);
+      r.setAttribute("y", y);
+      r.setAttribute("width", spotW);
+      r.setAttribute("height", spotH);
+      r.setAttribute("fill", "transparent");
+      r.setAttribute("pointer-events", "none");
+      sg.appendChild(r);
+      if (isDock) {
+        addDockTriangles(sg, spotId, x, y, spotW, spotH, "right", orientation);
+      }
+      group.appendChild(sg);
+      sg.classList.add("highlight-add");
+      setTimeout(() => sg.classList.remove("highlight-add"), 2000);
+    }
+    if (orientation === "vertical") {
+      group.setAttribute("data-w", (spots.length + count) * spotW);
+    } else {
+      group.setAttribute("data-h", (spots.length + count) * spotH);
+    }
+    const hit = group.querySelector('rect[data-role="hitbox"]');
+    if (hit) {
+      hit.setAttribute("width", group.getAttribute("data-w"));
+      hit.setAttribute("height", group.getAttribute("data-h"));
+    }
+    if (group.getAttribute("data-zone") === "yes") {
+      updateZoneSpotText(group);
+    }
+  }
+
+  function removeItems(group, count) {
+    const spots = group.querySelectorAll("g.eagleViewDropSpot");
+    if (!spots.length) return;
+    const toRemove = Array.from(spots).slice(-count);
+    toRemove.forEach((sp) => {
+      const rect = sp.querySelector("rect");
+      if (rect) {
+        const overlay = document.createElementNS(
+          "http://www.w3.org/2000/svg",
+          "rect",
+        );
+        overlay.setAttribute("x", rect.getAttribute("x"));
+        overlay.setAttribute("y", rect.getAttribute("y"));
+        overlay.setAttribute("width", rect.getAttribute("width"));
+        overlay.setAttribute("height", rect.getAttribute("height"));
+        overlay.setAttribute("fill", "none");
+        overlay.classList.add("highlight-remove");
+        group.appendChild(overlay);
+        setTimeout(() => overlay.remove(), 2000);
+      }
+      sp.remove();
+    });
+    const firstRect = spots[0].querySelector("rect");
+    const spotW = parseFloat(firstRect.getAttribute("width"));
+    const spotH = parseFloat(firstRect.getAttribute("height"));
+    const orientation =
+      parseFloat(group.getAttribute("data-w")) >
+      parseFloat(group.getAttribute("data-h"))
+        ? "vertical"
+        : "horizontal";
+    const remaining = spots.length - count;
+    if (orientation === "vertical") {
+      group.setAttribute("data-w", Math.max(remaining, 1) * spotW);
+    } else {
+      group.setAttribute("data-h", Math.max(remaining, 1) * spotH);
+    }
+    const hit = group.querySelector('rect[data-role="hitbox"]');
+    if (hit) {
+      hit.setAttribute("width", group.getAttribute("data-w"));
+      hit.setAttribute("height", group.getAttribute("data-h"));
+    }
+    if (group.getAttribute("data-zone") === "yes") {
+      updateZoneSpotText(group);
+    }
+  }
+
+  function updateZoneSpotText(group) {
+    const count = group.querySelectorAll("g.eagleViewDropSpot").length;
+    const txt = group.querySelector('text[fill="#ccc"]');
+    if (txt) {
+      txt.textContent = `${count} Spots`;
+    }
+  }
+
+  function editFirstNumber(group) {
+    const firstLabel = group.querySelector(".spot-label");
+    if (!firstLabel) return;
+    const m = firstLabel.textContent.match(/^(\D*)(\d+)(.*)$/);
+    if (!m) return;
+    const prefix = m[1];
+    const suffix = m[3];
+    const start = parseInt(prompt("What number to start with?", m[2]), 10);
+    if (Number.isNaN(start)) return;
+    const labels = group.querySelectorAll(".spot-label");
+    labels.forEach((lbl, idx) => {
+      lbl.textContent = prefix + (start + idx) + suffix;
+    });
+  }
 
   rebuildLostBox();
   ensureLostBoxOnTop();
