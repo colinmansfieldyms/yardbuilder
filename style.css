@@ -445,14 +445,14 @@ input:checked + .slider:before {
 }
 
 /* =========================
-   NEW: Tooltip Styles for Label Rotation
+   Tooltip Styles for Label Rotation
 ========================= */
 .rotation-tooltip {
   margin-left: 4px;
 }
 
 /* =========================
-   NEW FEATURE: Zones Table
+   Zones Table
 ========================= */
 .zones-table-wrapper {
   margin: 1rem;
