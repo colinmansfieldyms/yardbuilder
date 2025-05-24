@@ -1,0 +1,711 @@
+/**********************************************
+ * GLOBAL & LAYOUT (HTML)
+**********************************************/
+html, body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+body {
+  display: flex;
+  flex-direction: column;
+  font-family: Arial, sans-serif;
+  overflow: hidden; /* Prevent body scroll */
+  user-select: none; /* no text selection */
+}
+
+/* =========================
+   TOP BAR
+========================= */
+.top-bar {
+  width: 100%;
+  background-color: #14335D;
+  color: #fff;
+  height: 48px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 1rem;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+.bar-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.bar-left img {
+  width: 32px; 
+  height: 32px;
+  object-fit: cover;
+  border-radius: 50%;
+}
+.bar-title {
+  font-size: 1.2rem;
+}
+.bar-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+.bar-actions button {
+  cursor: pointer;
+  background-color: #eee;
+  color: #000;
+  border: 1px solid #999;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.9rem;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+.bar-actions button:hover {
+  background-color: #ddd;
+}
+
+/* =========================
+   MAIN BODY WRAPPER
+========================= */
+.body-wrapper {
+  display: flex;
+  flex-direction: row; /* Align sidebar and main content horizontally */
+  flex: 1;
+  position: relative;
+  overflow: hidden; 
+  min-height: 0; /* Important for flex children to shrink properly */
+}
+
+/* =========================
+   SIDEBAR
+========================= */
+.sidebar {
+  width: 300px;
+  background-color: #14335D;
+  color: #fff;
+  transition: width 0.3s ease;
+  overflow-y: auto;
+  padding: 1rem;
+  box-sizing: border-box;
+  min-height: 0; /* Important for flex children to shrink properly */
+}
+.sidebar.collapsed {
+  width: 40px;
+  padding: 1rem 0;
+}
+.sidebar.collapsed .sidebar-header h2,
+.sidebar.collapsed .menu-section,
+.sidebar.collapsed .toggle-section {
+  display: none;
+}
+/* Hide Facility Number when collapsed */
+.sidebar.collapsed .facility-inline {
+  display: none !important;
+}
+
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+.sidebar.collapsed .sidebar-header {
+  justify-content: center;
+}
+.collapse-icon {
+  font-size: 1.2rem;
+}
+.menu-section {
+  margin-top: 1rem;
+}
+.menu-title {
+  background-color: #2b476d;
+  padding: 0.2rem 0.4rem;
+  line-height: 1.2;
+  font-size: 0.9rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  border-radius: 4px;
+}
+.menu-title:hover {
+  background-color: #3b5a8d;
+}
+.menu-content {
+  background-color: #2b476d;
+  padding: 0.5rem;
+  display: none;
+  border-radius: 4px;
+  margin-top: 0.3rem;
+}
+.menu-content label,
+.menu-content input,
+.menu-content select,
+.menu-content button {
+  display: block;
+  margin: 0.3rem 0;
+}
+.menu-content button {
+  cursor: pointer;
+  background-color: #eee;
+  color: #000;
+  border: 1px solid #999;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.9rem;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+.menu-content button:hover {
+  background-color: #ddd;
+}
+
+.facility-inline {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.5rem 0;
+}
+.facility-inline label {
+  margin: 0;
+}
+.facility-inline input {
+  width: 60px; /* shrink to fit same line */
+}
+
+/* Slight highlight for the Zone Name block */
+.zone-name-block {
+  background-color: #1b4c88;
+  padding: 0.5rem;
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+}
+.zone-name-block label {
+  margin: 0.3rem 0;
+}
+.zone-name-block input {
+  margin-top: 0.2rem;
+}
+
+/* =========================
+   TOGGLE SECTIONS (Snap/Trash)
+========================= */
+.toggle-section {
+  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+}
+.toggle-section label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+}
+
+/* =========================
+   ON/OFF Toggle Switch
+========================= */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 34px;
+  height: 18px;
+}
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; 
+  left: 0; 
+  right: 0; 
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+  border-radius: 18px;
+}
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 12px;
+  width: 12px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+input:checked + .slider {
+  background-color: #2196F3;
+}
+input:focus + .slider {
+  box-shadow: 0 0 1px #2196F3;
+}
+input:checked + .slider:before {
+  transform: translateX(16px);
+}
+
+/* =========================
+   SVG WRAPPER
+========================= */
+.svg-wrapper {
+  position: relative;
+  margin: 1rem;
+  width: 1046.5px; 
+  height: 500px;
+  border: 2px solid #444;
+  box-sizing: content-box;
+  overflow: hidden;
+  flex-shrink: 0; /* Prevent shrinking when the main-content grows */
+}
+
+/*
+  Classes toggled for export cleanup
+  (applied for both JPG & SVG export)
+*/
+.no-border {
+  border: none !important;
+}
+.no-buttons .trash-can {
+  display: none !important;
+}
+.no-grid #canvasSVG .grid-rect {
+  display: none !important;
+}
+.no-grid #canvasSVG .grid-overlay {
+  display: none !important;
+}
+.export-cleanup g[data-type="draggable"] {
+  cursor: auto !important; 
+}
+/* We'll hide any elements with 'data-export-ignore' in the final export */
+.export-cleanup [data-export-ignore] {
+  display: none !important;
+}
+
+/* =========================
+   TRASH CAN (HTML-based)
+========================= */
+.trash-can {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  width: 48px;
+  height: 48px;
+  z-index: 9999;
+  transition: transform 0.2s ease;
+}
+.trash-can img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* =========================
+   ANIMATIONS
+========================= */
+@keyframes vibrate {
+  0% { transform: translate(0,0); }
+  20% { transform: translate(-2px, 0); }
+  40% { transform: translate(2px, 0); }
+  60% { transform: translate(-2px, 0); }
+  80% { transform: translate(2px, 0); }
+  100% { transform: translate(0,0); }
+}
+.vibrate {
+  animation: vibrate 0.3s ease-in-out;
+}
+.puff-overlay {
+  position: absolute;
+  width: 50px;
+  height: 50px;
+  font-size: 24px;
+  text-align: center;
+  align-items: center;
+  justify-content: center;
+  display: flex;
+  z-index: 11000;
+  pointer-events: none;
+}
+.fade-out {
+  animation: fadeOut 0.8s forwards;
+}
+@keyframes fadeOut {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* Show the resize cursor on the corner handle */
+[data-resize="corner"] {
+  cursor: nwse-resize;
+}
+
+/* =========================
+   FOOTER
+========================= */
+.footer {
+  text-align: center;
+  font-size: 0.8rem;
+  color: #666;
+  padding: 0.5rem 0;
+  background-color: #f1f1f1;
+  flex-shrink: 0;
+}
+.footer a {
+  color: #666;
+  text-decoration: none;
+}
+.footer a:hover {
+  text-decoration: underline;
+}
+
+/* =========================
+   TOOLTIP STYLES
+========================= */
+.tooltip-container {
+  display: inline-block;
+  position: relative;
+  margin-left: 4px;
+  cursor: pointer;
+  font-size: 0.8em;
+  color: #aaaaaa; /* subtle */
+}
+.tooltip-container::after {
+  content: ' \24D8'; /* "i" in a circle (Unicode U+24D8) */
+  font-weight: normal;
+  margin-left: 0px;
+}
+.tooltip-text {
+  visibility: hidden;
+  width: 200px;
+  background-color: #444;
+  color: #fff;
+  text-align: center;
+  border-radius: 4px;
+  padding: 0.5rem;
+  position: absolute;
+  z-index: 10;
+  bottom: 130%;
+  left: 50%;
+  transform: translateX(-50%);
+  opacity: 0;
+  transition: opacity 0.2s;
+  font-size: 0.8rem;
+}
+.tooltip-container:hover .tooltip-text {
+  visibility: visible;
+  opacity: 1;
+}
+.tooltip-text::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 6px;
+  border-style: solid;
+  border-color: #444 transparent transparent transparent;
+}
+
+/* Small preview image for custom image selection */
+#customImagePreview {
+  display: none;
+  width: 36px;
+  height: 36px;
+  margin-left: 0.5rem;
+  object-fit: contain;
+  border: 1px solid #999;
+  background-color: #fff;
+}
+
+/* =========================
+   TRIANGLES
+========================= */
+.loading_triangle {
+  fill: #FFA500;
+  display: none;
+}
+.unloading_triangle {
+  fill: #30C230;
+  display: none;
+}
+
+/* =========================
+   (UPDATED) Label Text
+   Removed fill: #fff so user-selected color is honored
+========================= */
+.label-text {
+  /* no fill here (will be set inline) */
+  font-family: Helvetica, sans-serif;
+  pointer-events: none; /* for smoother dragging */
+}
+
+/* =========================
+   NEW: Tooltip Styles for Label Rotation
+========================= */
+.rotation-tooltip {
+  margin-left: 4px;
+}
+
+/* =========================
+   NEW FEATURE: Zones Table
+========================= */
+.zones-table-wrapper {
+  margin: 1rem;
+  border: 2px solid #444;
+  border-radius: 4px;
+  background-color: #2b476d;
+  color: #fff;
+  width: 1046.5px; /* Same width as the SVG Canvas */
+  max-height: 300px;
+  overflow: auto;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+.zones-table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #3b5a8d;
+  padding: 0.5rem;
+  cursor: pointer;
+  user-select: none;
+  border-top-left-radius: 4px;
+  border-top-right-radius: 4px;
+}
+.zones-table-header h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+.zones-table-header .collapse-icon {
+  font-size: 1rem;
+  transition: transform 0.3s;
+}
+.zones-table-content {
+  padding: 0.5rem;
+  display: none;
+}
+.zones-table-content table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.zones-table-content th, .zones-table-content td {
+  border: 1px solid #fff;
+  padding: 0.3rem;
+  text-align: center;
+  font-size: 0.9rem;
+}
+.zones-table-content tr:hover {
+  background-color: #4a6fa5;
+  cursor: pointer;
+}
+/* Highlighted elements */
+.highlighted {
+  stroke: yellow;
+  stroke-width: 2;
+}
+
+/* =========================
+   LAYERS SIDEBAR
+========================= */
+.layers-sidebar {
+  width: 200px;
+  background-color: #14335D;
+  color: #fff;
+  overflow-y: auto;
+  box-sizing: border-box;
+  transition: width 0.3s ease;
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+}
+.layers-sidebar.collapsed {
+  width: 40px;
+}
+.layers-sidebar.collapsed h3,
+.layers-sidebar.collapsed #layersList {
+  display: none;
+}
+.layers-sidebar.collapsed .layers-header {
+  justify-content: center;
+}
+.layers-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #2b476d;
+  padding: 0.5rem;
+  cursor: pointer;
+  user-select: none;
+}
+#layersList {
+  list-style: none;
+  margin: 0;
+  padding: 0.5rem;
+}
+#layersList li {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem;
+  border: 1px solid #4a6fa5;
+  margin-bottom: 0.3rem;
+  background-color: #2b476d;
+  cursor: grab;
+  user-select: none;
+}
+
+#layersList li .layer-handle {
+  cursor: grab;
+}
+#layersList li .drag-handle {
+  visibility: hidden;
+}
+#layersList li:hover .drag-handle {
+  visibility: visible;
+}
+#layersList li .layer-name {
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+#layerContextMenu {
+  position: absolute;
+  background-color: #2b476d;
+  color: #fff;
+  border: 1px solid #444;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: none;
+  z-index: 1000;
+}
+#layerContextMenu li {
+  padding: 0.4rem 0.8rem;
+  cursor: pointer;
+}
+#layerContextMenu li:hover {
+  background-color: #3b5a8d;
+}
+
+/* =========================
+   MAIN CONTENT
+========================= */
+.main-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: auto;
+  min-height: 0; /* Important for flex children to shrink properly */
+  align-items: center; /* Center the Zones List horizontally */
+  transition: margin-right 0.3s ease;
+}
+
+.body-wrapper.layers-open .main-content {
+  margin-right: 200px;
+}
+
+/* =========================
+   RESPONSIVE DESIGN
+========================= */
+@media (max-width: 1200px) {
+  .svg-wrapper {
+    width: 80vw;
+    height: 40vh;
+  }
+  .zones-table-wrapper {
+    width: 80vw;
+  }
+}
+@media (max-width: 800px) {
+  .body-wrapper {
+    flex-direction: column;
+  }
+  .sidebar {
+    width: 100%;
+    height: 200px;
+    overflow-y: scroll;
+  }
+  .svg-wrapper {
+    width: 100%;
+    height: 300px;
+  }
+  .zones-table-wrapper {
+    width: 100%;
+    max-height: 200px;
+  }
+}
+
+/* =========================
+   COUNTERS STYLING
+========================= */
+/* Updated Counters Styling */
+.counters {
+  display: flex;
+  gap: 1rem;
+  margin-right: 1rem; /* Maintains space between counters and buttons */
+  align-items: center; /* Vertically centers the counters with the buttons */
+}
+
+.counters span {
+  padding: 0.3rem 0.8rem;
+  font-weight: 500; 
+  font-size: 14px;
+  color: #eeeeee;
+  white-space: nowrap; /* Prevents text from wrapping */
+  background-color: #14335D;
+  border: 1px solid #e0e0e0; /* Light border */
+  cursor: default;
+}
+
+/* Optional: Add a slight hover effect for better UX without implying interactivity */
+.counters span:hover {
+  background-color: #2b6cc6; /* Ensures no background appears on hover */
+  color: #eeeeee;
+}
+
+.counters::after {
+  content: "";
+  display: inline-block;
+  width: 1px;
+  height: 20px;
+  background-color: #ccc;
+}
+
+/* Undo Button Styling */
+#undoBtn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s, transform 0.2s;
+  border-radius: 4px; /* Optional: Adds slight rounding on hover */
+}
+
+#undoBtn:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  transform: scale(1.05); /* Optional: Slightly enlarges on hover */
+}
+
+#undoBtn svg {
+  fill: #eeeeee;
+  width: 16px;
+  height: 16px;
+}
+#undoBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
