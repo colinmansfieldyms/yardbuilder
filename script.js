@@ -2358,8 +2358,11 @@
       }
 
       const importedScale = parseFloat(importedSVG.getAttribute('data-canvas-scale'));
+      let finalScale;
       if (!isNaN(importedScale)) {
-        applyScale(importedScale);
+        finalScale = importedScale;
+        applyScale(finalScale);
+        myScalableContent.setAttribute('transform', `scale(${finalScale})`);
       } else {
         const importedTransform = importedScalable.getAttribute('transform');
         let parsedScale = 1;
@@ -2375,28 +2378,19 @@
             parsedScale = wScale;
           }
         }
-        applyScale(parsedScale);
-        myScalableContent.setAttribute('transform', `scale(${importedScale})`);
-        currentScale = importedScale;
-        canvasScaleInput.value = importedScale;
-        scaleDisplay.textContent = importedScale.toFixed(1);
-        canvasSVG.setAttribute('data-canvas-scale', importedScale);
-        previousScale = importedScale;
-      } else {
-        const importedTransform = importedScalable.getAttribute('transform');
+        finalScale = parsedScale;
+        applyScale(finalScale);
         if (importedTransform) {
           myScalableContent.setAttribute('transform', importedTransform);
-          const match = /scale\(([^)]+)\)/.exec(importedTransform);
-          currentScale = match ? parseFloat(match[1]) || 1 : 1;
         } else {
-          myScalableContent.setAttribute('transform', 'scale(1)');
-          currentScale = 1;
+          myScalableContent.setAttribute('transform', `scale(${finalScale})`);
         }
-        canvasScaleInput.value = currentScale;
-        scaleDisplay.textContent = currentScale.toFixed(1);
-        canvasSVG.setAttribute('data-canvas-scale', currentScale);
-        previousScale = currentScale;
       }
+      currentScale = finalScale;
+      canvasScaleInput.value = finalScale;
+      scaleDisplay.textContent = finalScale.toFixed(1);
+      canvasSVG.setAttribute('data-canvas-scale', finalScale);
+      previousScale = finalScale;
 
       const allLoadingTriangles = myScalableContent.querySelectorAll('.loading_triangle');
       const allUnloadingTriangles = myScalableContent.querySelectorAll('.unloading_triangle');
