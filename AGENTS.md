@@ -12,6 +12,17 @@ These instructions apply to all files in this repository.
   ```bash
   npx prettier -c index.html script.js style.css
   ```
+## Testing
+- Lint JavaScript: npx eslint script.js
+- Validate HTML:
+  ```bash
+  npx htmlhint index.html
+  ```
+- Check CSS:
+  ```bash
+  npx stylelint style.css
+  ```
+- Optionally, run a headless browser test (e.g., Playwright or Cypress) to validate basic UI interactions.
 
 ## Commit Guidelines
 - Write concise, descriptive commit messages.
