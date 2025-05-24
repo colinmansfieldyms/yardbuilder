@@ -4,10 +4,17 @@
   "description": "**Website:** [YardBuilder](https://colinmansfieldyms.github.io/yardbuilder/)",
   "main": "script.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint .",
+    "format": "prettier -w index.html script.js style.css"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs"
+  "type": "commonjs",
+  "devDependencies": {
+    "@eslint/css": "*",
+    "eslint": "*",
+    "prettier": "*"
+  }
 }
