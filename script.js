@@ -3123,7 +3123,7 @@
     const firstRect = spots[0].querySelector("rect");
     const spotW = parseFloat(firstRect.getAttribute("width"));
     const spotH = parseFloat(firstRect.getAttribute("height"));
-    const orientation = spotW > spotH ? "horizontal" : "vertical";
+    const orientation = spotW > spotH ? "vertical" : "horizontal";
 
     if (group.getAttribute("data-zone") === "yes") {
       let maxX = 0;
@@ -3287,7 +3287,11 @@
     const firstRect = spots[0].querySelector("rect");
     const spotW = parseFloat(firstRect.getAttribute("width"));
     const spotH = parseFloat(firstRect.getAttribute("height"));
-    const orientation = spotW > spotH ? "horizontal" : "vertical";
+    const orientation =
+      parseFloat(group.getAttribute("data-w")) >
+      parseFloat(group.getAttribute("data-h"))
+        ? "vertical"
+        : "horizontal";
 
     const firstLabel = group.querySelector(".spot-label");
     const hasLabels = !!firstLabel;
@@ -3491,6 +3495,11 @@
     const spotW = parseFloat(firstRect.getAttribute("width"));
     const spotH = parseFloat(firstRect.getAttribute("height"));
     const orientation = spotW > spotH ? "horizontal" : "vertical";
+    const orientation =
+      parseFloat(group.getAttribute("data-w")) >
+      parseFloat(group.getAttribute("data-h"))
+        ? "vertical"
+        : "horizontal";
     const remaining = spots.length - removeCount;
     if (orientation === "vertical") {
       group.setAttribute("data-w", Math.max(remaining, 1) * spotW);
@@ -3533,7 +3542,7 @@
     if (!firstRect) return;
     const spotW = parseFloat(firstRect.getAttribute("width"));
     const spotH = parseFloat(firstRect.getAttribute("height"));
-    const orientation = spotW > spotH ? "horizontal" : "vertical";
+    const orientation = spotW > spotH ? "vertical" : "horizontal";
     const labelLocation = inferLabelLocation(firstLabel, orientation);
     const rotationMode = firstLabel.getAttribute("transform")
       ? "90"
