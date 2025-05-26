@@ -3241,6 +3241,17 @@
       }
     }
 
+  function addItems(group, count, isDock) {
+    const spots = group.querySelectorAll("g.eagleViewDropSpot");
+    if (!spots.length) return;
+    const firstRect = spots[0].querySelector("rect");
+    const spotW = parseFloat(firstRect.getAttribute("width"));
+    const spotH = parseFloat(firstRect.getAttribute("height"));
+    const orientation =
+      parseFloat(group.getAttribute("data-w")) >
+      parseFloat(group.getAttribute("data-h"))
+        ? "vertical"
+        : "horizontal";
     for (let i = 0; i < count; i++) {
       const idx = spots.length + i;
       const seq = getNextSpotSequence();
@@ -3304,7 +3315,6 @@
       }
       sg.setAttribute("data-sequence", seq);
       sg.setAttribute("data-spot-id", spotId);
-
       const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
       const x = orientation === "vertical" ? idx * spotW : 0;
       const y = orientation === "horizontal" ? idx * spotH : 0;
@@ -3329,6 +3339,10 @@
         );
       }
 
+      if (isDock) {
+        addDockTriangles(sg, spotId, x, y, spotW, spotH, "right", orientation);
+      }
+
       group.appendChild(sg);
       sg.classList.add("highlight-add");
       setTimeout(() => sg.classList.remove("highlight-add"), 2000);
@@ -3337,6 +3351,20 @@
     adjustGroupSize(group);
     updateCounters();
     rebuildLayersList();
+
+    if (orientation === "vertical") {
+      group.setAttribute("data-w", (spots.length + count) * spotW);
+    } else {
+      group.setAttribute("data-h", (spots.length + count) * spotH);
+    }
+    const hit = group.querySelector('rect[data-role="hitbox"]');
+    if (hit) {
+      hit.setAttribute("width", group.getAttribute("data-w"));
+      hit.setAttribute("height", group.getAttribute("data-h"));
+    }
+    if (group.getAttribute("data-zone") === "yes") {
+      updateZoneSpotText(group);
+    }
   }
 
   function removeItems(group, count) {
@@ -3344,6 +3372,7 @@
     if (!spots.length) return;
     const removeCount = Math.min(count, spots.length);
     const toRemove = Array.from(spots).slice(-removeCount);
+    const toRemove = Array.from(spots).slice(-count);
     toRemove.forEach((sp) => {
       const rect = sp.querySelector("rect");
       if (rect) {
@@ -3378,6 +3407,29 @@
     adjustGroupSize(group);
     updateCounters();
     rebuildLayersList();
+
+    const firstRect = spots[0].querySelector("rect");
+    const spotW = parseFloat(firstRect.getAttribute("width"));
+    const spotH = parseFloat(firstRect.getAttribute("height"));
+    const orientation =
+      parseFloat(group.getAttribute("data-w")) >
+      parseFloat(group.getAttribute("data-h"))
+        ? "vertical"
+        : "horizontal";
+    const remaining = spots.length - count;
+    if (orientation === "vertical") {
+      group.setAttribute("data-w", Math.max(remaining, 1) * spotW);
+    } else {
+      group.setAttribute("data-h", Math.max(remaining, 1) * spotH);
+    }
+    const hit = group.querySelector('rect[data-role="hitbox"]');
+    if (hit) {
+      hit.setAttribute("width", group.getAttribute("data-w"));
+      hit.setAttribute("height", group.getAttribute("data-h"));
+    }
+    if (group.getAttribute("data-zone") === "yes") {
+      updateZoneSpotText(group);
+    }
   }
 
   function updateZoneSpotText(group) {
@@ -3386,6 +3438,7 @@
     if (txt) {
       txt.textContent = `${count} Spots`;
     }
+
     const zn = group.getAttribute("data-zone-name") || "Zone";
     const zid = group.getAttribute("data-zone-id");
     addZoneToTable(zn, zid);
@@ -3430,6 +3483,8 @@
           rotationMode,
         );
       }
+    labels.forEach((lbl, idx) => {
+      lbl.textContent = prefix + (start + idx) + suffix;
     });
   }
 
