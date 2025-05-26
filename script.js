@@ -3240,7 +3240,7 @@
         ascending = n2 > n1;
       }
     }
-
+  }
   function addItems(group, count, isDock) {
     const spots = group.querySelectorAll("g.eagleViewDropSpot");
     if (!spots.length) return;
@@ -3483,6 +3483,7 @@
           rotationMode,
         );
       }
+    });
     labels.forEach((lbl, idx) => {
       lbl.textContent = prefix + (start + idx) + suffix;
     });
