@@ -3372,7 +3372,6 @@
     if (!spots.length) return;
     const removeCount = Math.min(count, spots.length);
     const toRemove = Array.from(spots).slice(-removeCount);
-    const toRemove = Array.from(spots).slice(-count);
     toRemove.forEach((sp) => {
       const rect = sp.querySelector("rect");
       if (rect) {
