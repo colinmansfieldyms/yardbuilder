@@ -538,7 +538,11 @@
   const layersCollapseIcon = document.getElementById("layersCollapseIcon");
   const layersList = document.getElementById("layersList");
   const layerContextMenu = document.getElementById("layerContextMenu");
+  const contextAdd = document.getElementById("contextAdd");
+  const contextRemove = document.getElementById("contextRemove");
+  const contextEditFirst = document.getElementById("contextEditFirst");
   let contextTarget = null;
+  let contextType = null; // 'dock' or 'spot'
   document
     .getElementById("bodyWrapper")
     .classList.toggle(
@@ -2984,6 +2988,25 @@
       if (!g || g.classList.contains("lostTrailer")) return;
       e.preventDefault();
       contextTarget = g;
+      const sampleSpot = g.querySelector("g.eagleViewDropSpot");
+      if (sampleSpot) {
+        const hasTriangle =
+          sampleSpot.querySelector(".loading_triangle") ||
+          sampleSpot.querySelector(".unloading_triangle");
+        contextType = hasTriangle ? "dock" : "spot";
+        contextAdd.textContent =
+          contextType === "dock" ? "⊕ Add Docks" : "⊕ Add Spots";
+        contextRemove.textContent =
+          contextType === "dock" ? "⊖ Remove Docks" : "⊖ Remove Spots";
+        contextAdd.style.display = "block";
+        contextRemove.style.display = "block";
+        contextEditFirst.style.display = "block";
+      } else {
+        contextType = null;
+        contextAdd.style.display = "none";
+        contextRemove.style.display = "none";
+        contextEditFirst.style.display = "none";
+      }
       layerContextMenu.style.display = "block";
       layerContextMenu.style.left = e.clientX + "px";
       layerContextMenu.style.top = e.clientY + "px";
@@ -2997,6 +3020,25 @@
       `#scalableContent > g[data-layer-id="${li.dataset.targetId}"]`,
     );
     if (!contextTarget) return;
+    const sampleSpot = contextTarget.querySelector("g.eagleViewDropSpot");
+    if (sampleSpot) {
+      const hasTriangle =
+        sampleSpot.querySelector(".loading_triangle") ||
+        sampleSpot.querySelector(".unloading_triangle");
+      contextType = hasTriangle ? "dock" : "spot";
+      contextAdd.textContent =
+        contextType === "dock" ? "⊕ Add Docks" : "⊕ Add Spots";
+      contextRemove.textContent =
+        contextType === "dock" ? "⊖ Remove Docks" : "⊖ Remove Spots";
+      contextAdd.style.display = "block";
+      contextRemove.style.display = "block";
+      contextEditFirst.style.display = "block";
+    } else {
+      contextType = null;
+      contextAdd.style.display = "none";
+      contextRemove.style.display = "none";
+      contextEditFirst.style.display = "none";
+    }
     layerContextMenu.style.display = "block";
     layerContextMenu.style.left = e.clientX + "px";
     layerContextMenu.style.top = e.clientY + "px";
@@ -3024,12 +3066,372 @@
     } else if (action === "delete") {
       deleteGroupDirect(contextTarget);
       contextTarget = null;
+    } else if (action === "add-items") {
+      if (!contextType) return;
+      const num = parseInt(
+        prompt(
+          `Add how many ${contextType === "dock" ? "docks" : "spots"}?`,
+          "1",
+        ),
+        10,
+      );
+      if (Number.isNaN(num) || num <= 0) return;
+      addItems(contextTarget, num, contextType === "dock");
+    } else if (action === "remove-items") {
+      if (!contextType) return;
+      const num = parseInt(
+        prompt(
+          `Remove how many ${contextType === "dock" ? "docks" : "spots"}?`,
+          "1",
+        ),
+        10,
+      );
+      if (Number.isNaN(num) || num <= 0) return;
+      removeItems(contextTarget, num);
+    } else if (action === "edit-first") {
+      editFirstNumber(contextTarget);
     }
     ensureLostBoxOnTop();
     layerContextMenu.style.display = "none";
     ensureLostBoxOnTop();
     rebuildLayersList();
+    rebuildZonesTable();
+    updateCounters();
   });
+
+  function inferLabelLocation(label, orientation) {
+    if (!label) return orientation === "vertical" ? "bottom" : "right";
+    const transform = label.getAttribute("transform");
+    if (transform && transform.includes("rotate(-90)")) {
+      const match = /translate\([^,]+,\s*([^)]+)\)/.exec(transform);
+      const ty = match ? parseFloat(match[1]) : 0;
+      if (orientation === "vertical") {
+        return ty < 0 ? "top" : "bottom";
+      }
+    }
+    const x = parseFloat(label.getAttribute("x") || 0);
+    const y = parseFloat(label.getAttribute("y") || 0);
+    if (orientation === "vertical") {
+      return y < 0 ? "top" : "bottom";
+    }
+    return x < 0 ? "left" : "right";
+  }
+
+  function adjustGroupSize(group) {
+    const spots = group.querySelectorAll("g.eagleViewDropSpot");
+    if (!spots.length) return;
+    const firstRect = spots[0].querySelector("rect");
+    const spotW = parseFloat(firstRect.getAttribute("width"));
+    const spotH = parseFloat(firstRect.getAttribute("height"));
+    const orientation = spotW > spotH ? "horizontal" : "vertical";
+
+    if (group.getAttribute("data-zone") === "yes") {
+      let maxX = 0;
+      let maxY = 0;
+      spots.forEach((sp) => {
+        const r = sp.querySelector("rect");
+        const x =
+          parseFloat(r.getAttribute("x")) + parseFloat(r.getAttribute("width"));
+        const y =
+          parseFloat(r.getAttribute("y")) +
+          parseFloat(r.getAttribute("height"));
+        if (x > maxX) maxX = x;
+        if (y > maxY) maxY = y;
+      });
+      const zoneW = maxX;
+      const zoneH = maxY;
+      group.setAttribute("data-w", zoneW);
+      group.setAttribute("data-h", zoneH);
+
+      const hit = group.querySelector('rect[data-role="hitbox"]');
+      if (hit) {
+        hit.setAttribute("width", zoneW);
+        hit.setAttribute("height", zoneH);
+      }
+      const outline = group.querySelector("rect.zone-outline");
+      if (outline) {
+        outline.setAttribute("width", zoneW);
+        outline.setAttribute("height", zoneH);
+      }
+      const nameRect = group.querySelector("rect.zone-name-box");
+      if (nameRect) {
+        nameRect.setAttribute("width", zoneW);
+      }
+      const nameText = group.querySelector(".zone-name-box + text");
+      if (nameText) {
+        nameText.setAttribute("x", zoneW / 2);
+      }
+      const txt = group.querySelector('text[fill="#ccc"]');
+      if (txt) {
+        txt.setAttribute("x", zoneW / 2);
+        const bodyCenterY = (zoneH - 18.2) / 2 + 18.2;
+        txt.setAttribute("y", bodyCenterY);
+        txt.textContent = `${spots.length} Spots`;
+      }
+    } else {
+      if (orientation === "vertical") {
+        group.setAttribute("data-w", spots.length * spotW);
+        group.setAttribute("data-h", spotH);
+      } else {
+        group.setAttribute("data-w", spotW);
+        group.setAttribute("data-h", spots.length * spotH);
+      }
+
+      const hit = group.querySelector('rect[data-role="hitbox"]');
+      if (hit) {
+        hit.setAttribute("width", group.getAttribute("data-w"));
+        hit.setAttribute("height", group.getAttribute("data-h"));
+      }
+    }
+
+    if (group.getAttribute("data-zone") === "yes") {
+      const zn = group.getAttribute("data-zone-name") || "Zone";
+      const zid = group.getAttribute("data-zone-id");
+      addZoneToTable(zn, zid);
+    }
+  }
+
+  function spotsFromLabel(label) {
+    const g = label.parentNode;
+    const labels = Array.from(g.querySelectorAll(".spot-label"));
+    const idx = labels.indexOf(label);
+    const spots = g.querySelectorAll("g.eagleViewDropSpot");
+    return spots[idx] || null;
+  }
+
+  function addItems(group, count, isDock) {
+    const spots = group.querySelectorAll("g.eagleViewDropSpot");
+    if (!spots.length) return;
+
+    const firstRect = spots[0].querySelector("rect");
+    const spotW = parseFloat(firstRect.getAttribute("width"));
+    const spotH = parseFloat(firstRect.getAttribute("height"));
+    const orientation = spotW > spotH ? "horizontal" : "vertical";
+
+    const firstLabel = group.querySelector(".spot-label");
+    const hasLabels = !!firstLabel;
+    const labelLocation = hasLabels
+      ? inferLabelLocation(firstLabel, orientation)
+      : orientation === "vertical"
+        ? "bottom"
+        : "right";
+    const rotationMode =
+      firstLabel && firstLabel.getAttribute("transform") ? "90" : "dynamic";
+
+    const labels = Array.from(group.querySelectorAll(".spot-label"));
+    let prefix = "";
+    let suffix = "";
+    let nextNum = 0;
+    let ascending = true;
+    if (labels.length) {
+      const mFirst = labels[0].textContent.match(/^(\D*)(\d+)(.*)$/);
+      if (mFirst) {
+        prefix = mFirst[1];
+        suffix = mFirst[3];
+      }
+      const mLast =
+        labels[labels.length - 1].textContent.match(/^(\D*)(\d+)(.*)$/);
+      if (mLast) {
+        nextNum = parseInt(mLast[2], 10);
+      }
+      if (labels.length > 1) {
+        const n1 = parseInt(labels[0].textContent.match(/\d+/)[0], 10);
+        const n2 = parseInt(labels[1].textContent.match(/\d+/)[0], 10);
+        ascending = n2 > n1;
+      }
+    }
+
+    for (let i = 0; i < count; i++) {
+      const idx = spots.length + i;
+      const seq = getNextSpotSequence();
+      const spotId = buildSpotId(facilityId, seq);
+
+      // Boundary line for the new outer edge
+      const line = document.createElementNS(
+        "http://www.w3.org/2000/svg",
+        "line",
+      );
+      if (orientation === "vertical") {
+        const pos = (idx + 1) * spotW;
+        line.setAttribute("x1", pos);
+        line.setAttribute("y1", 0);
+        line.setAttribute("x2", pos);
+        line.setAttribute("y2", spotH);
+      } else {
+        const pos = (idx + 1) * spotH;
+        line.setAttribute("x1", 0);
+        line.setAttribute("y1", pos);
+        line.setAttribute("x2", spotW);
+        line.setAttribute("y2", pos);
+      }
+      line.setAttribute("stroke", "#fff");
+      line.setAttribute("stroke-width", "1.2");
+      line.setAttribute("pointer-events", "none");
+      group.appendChild(line);
+
+      if (hasLabels) {
+        const txt = document.createElementNS(
+          "http://www.w3.org/2000/svg",
+          "text",
+        );
+        txt.setAttribute("class", "spot-label");
+        txt.setAttribute("pointer-events", "none");
+        nextNum += ascending ? 1 : -1;
+        const lblTxt = prefix + nextNum + suffix;
+        txt.textContent = lblTxt;
+        positionLabel(
+          txt,
+          orientation,
+          labelLocation,
+          spotW,
+          spotH,
+          orientation === "vertical" ? idx * spotW : 0,
+          orientation === "horizontal" ? idx * spotH : 0,
+          lblTxt,
+          rotationMode,
+        );
+        group.appendChild(txt);
+      }
+
+      const sg = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      sg.setAttribute("class", "droppable eagleViewDropSpot");
+      sg.setAttribute(
+        "data-zone-name",
+        group.getAttribute("data-zone-name") || "",
+      );
+      if (group.getAttribute("data-zone-id")) {
+        sg.setAttribute("data-zone-id", group.getAttribute("data-zone-id"));
+      }
+      sg.setAttribute("data-sequence", seq);
+      sg.setAttribute("data-spot-id", spotId);
+
+      const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      const x = orientation === "vertical" ? idx * spotW : 0;
+      const y = orientation === "horizontal" ? idx * spotH : 0;
+      r.setAttribute("x", x);
+      r.setAttribute("y", y);
+      r.setAttribute("width", spotW);
+      r.setAttribute("height", spotH);
+      r.setAttribute("fill", "transparent");
+      r.setAttribute("pointer-events", "none");
+      sg.appendChild(r);
+
+      if (isDock) {
+        addDockTriangles(
+          sg,
+          spotId,
+          x,
+          y,
+          spotW,
+          spotH,
+          labelLocation,
+          orientation,
+        );
+      }
+
+      group.appendChild(sg);
+      sg.classList.add("highlight-add");
+      setTimeout(() => sg.classList.remove("highlight-add"), 2000);
+    }
+
+    adjustGroupSize(group);
+    updateCounters();
+    rebuildLayersList();
+  }
+
+  function removeItems(group, count) {
+    const spots = group.querySelectorAll("g.eagleViewDropSpot");
+    if (!spots.length) return;
+    const removeCount = Math.min(count, spots.length);
+    const toRemove = Array.from(spots).slice(-removeCount);
+    toRemove.forEach((sp) => {
+      const rect = sp.querySelector("rect");
+      if (rect) {
+        const overlay = document.createElementNS(
+          "http://www.w3.org/2000/svg",
+          "rect",
+        );
+        overlay.setAttribute("x", rect.getAttribute("x"));
+        overlay.setAttribute("y", rect.getAttribute("y"));
+        overlay.setAttribute("width", rect.getAttribute("width"));
+        overlay.setAttribute("height", rect.getAttribute("height"));
+        overlay.setAttribute("fill", "none");
+        overlay.classList.add("highlight-remove");
+        group.appendChild(overlay);
+        setTimeout(() => overlay.remove(), 2000);
+      }
+      sp.remove();
+    });
+
+    const labels = group.querySelectorAll(".spot-label");
+    for (let i = 0; i < removeCount && labels.length; i++) {
+      const lbl = labels[labels.length - 1 - i];
+      if (lbl) lbl.remove();
+    }
+
+    const lines = group.querySelectorAll("line");
+    for (let i = 0; i < removeCount; i++) {
+      const ln = lines[lines.length - 1 - i];
+      if (ln) ln.remove();
+    }
+
+    adjustGroupSize(group);
+    updateCounters();
+    rebuildLayersList();
+  }
+
+  function updateZoneSpotText(group) {
+    const count = group.querySelectorAll("g.eagleViewDropSpot").length;
+    const txt = group.querySelector('text[fill="#ccc"]');
+    if (txt) {
+      txt.textContent = `${count} Spots`;
+    }
+    const zn = group.getAttribute("data-zone-name") || "Zone";
+    const zid = group.getAttribute("data-zone-id");
+    addZoneToTable(zn, zid);
+  }
+
+  function editFirstNumber(group) {
+    const firstLabel = group.querySelector(".spot-label");
+    if (!firstLabel) return;
+    const m = firstLabel.textContent.match(/^(\D*)(\d+)(.*)$/);
+    if (!m) return;
+    const prefix = m[1];
+    const suffix = m[3];
+    const start = parseInt(prompt("What number to start with?", m[2]), 10);
+    if (Number.isNaN(start)) return;
+    const labels = group.querySelectorAll(".spot-label");
+    const firstRect = group.querySelector("g.eagleViewDropSpot rect");
+    if (!firstRect) return;
+    const spotW = parseFloat(firstRect.getAttribute("width"));
+    const spotH = parseFloat(firstRect.getAttribute("height"));
+    const orientation = spotW > spotH ? "horizontal" : "vertical";
+    const labelLocation = inferLabelLocation(firstLabel, orientation);
+    const rotationMode = firstLabel.getAttribute("transform")
+      ? "90"
+      : "dynamic";
+    labels.forEach((lbl, idx) => {
+      const newTxt = prefix + (start + idx) + suffix;
+      lbl.textContent = newTxt;
+      const spot = spotsFromLabel(lbl);
+      if (spot) {
+        const r = spot.querySelector("rect");
+        const x = parseFloat(r.getAttribute("x"));
+        const y = parseFloat(r.getAttribute("y"));
+        positionLabel(
+          lbl,
+          orientation,
+          labelLocation,
+          spotW,
+          spotH,
+          orientation === "vertical" ? x : 0,
+          orientation === "horizontal" ? y : 0,
+          newTxt,
+          rotationMode,
+        );
+      }
+    });
+  }
 
   rebuildLostBox();
   ensureLostBoxOnTop();

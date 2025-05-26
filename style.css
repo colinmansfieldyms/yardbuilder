@@ -542,6 +542,16 @@ input:checked + .slider:before {
   stroke-width: 2;
 }
 
+.highlight-add {
+  stroke: yellow;
+  stroke-width: 2;
+}
+
+.highlight-remove {
+  stroke: red;
+  stroke-width: 2;
+}
+
 /* =========================
    LAYERS SIDEBAR
 ========================= */
