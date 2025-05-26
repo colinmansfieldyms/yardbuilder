@@ -7,7 +7,8 @@
   // -------------------------------
   document.addEventListener("keydown", (e) => {
     // Mac users often use metaKey (Command) instead of ctrlKey
-    const isUndoKey = (e.ctrlKey || e.metaKey) && e.key === "z";
+    const key = e.key.toLowerCase();
+    const isUndoKey = (e.ctrlKey || e.metaKey) && key === "z";
     if (isUndoKey) {
       e.preventDefault();
       undoLastAction();
@@ -519,8 +520,9 @@
   let lostBoxGroup = null;
 
   function ensureLostBoxOnTop() {
-    const lb = document.querySelector("#scalableContent > g.lostTrailer");
-    if (lb && lb.parentNode) lb.parentNode.appendChild(lb);
+    const scalable = document.getElementById("scalableContent");
+    const lost = scalable.querySelector("g.lostTrailer");
+    if (lost) scalable.appendChild(lost);
   }
 
   // Initialize facility
@@ -1519,6 +1521,7 @@
     container.setAttribute("data-h", "0");
     container.setAttribute("data-zone-id", zoneId);
     container.setAttribute("data-zone-name", opts.zoneName);
+    container.setAttribute("data-orientation", opts.orientation);
 
     let totalW = 0,
       totalH = 0;
@@ -2975,12 +2978,6 @@
     rebuildLayersList();
   }
 
-  function ensureLostBoxOnTop() {
-    const scalable = document.getElementById("scalableContent");
-    const lost = scalable.querySelector("g.lostTrailer");
-    if (lost) scalable.appendChild(lost);
-  }
-
   document
     .getElementById("scalableContent")
     .addEventListener("contextmenu", (e) => {
@@ -3283,12 +3280,13 @@
     const firstRect = spots[0].querySelector("rect");
     const spotW = parseFloat(firstRect.getAttribute("width"));
     const spotH = parseFloat(firstRect.getAttribute("height"));
-    const orientation =
-      parseFloat(group.getAttribute("data-w")) >
-      parseFloat(group.getAttribute("data-h"))
-        ? "vertical"
-        : "horizontal";
-
+    const orientation = group.getAttribute("data-orientation")
+      || (
+        parseFloat(group.getAttribute("data-w")) >
+        parseFloat(group.getAttribute("data-h"))
+          ? "horizontal"
+          : "vertical"
+        ); 
     const firstLabel = group.querySelector(".spot-label");
     const hasLabels = !!firstLabel;
     const labelLocation = hasLabels
