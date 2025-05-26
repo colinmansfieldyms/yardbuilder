@@ -3199,10 +3199,91 @@
     return spots[idx] || null;
   }
 
-  function addItems(group, count, isDock) {
+  function addZoneItems(group, count) {
     const spots = group.querySelectorAll("g.eagleViewDropSpot");
     if (!spots.length) return;
+    const firstRect = spots[0].querySelector("rect");
+    const spotW = parseFloat(firstRect.getAttribute("width"));
+    const spotH = parseFloat(firstRect.getAttribute("height"));
+    let zoneW = parseFloat(group.getAttribute("data-w"));
+    let zoneH = parseFloat(group.getAttribute("data-h"));
+    const orientation = zoneH - 18.2 > zoneW ? "vertical" : "horizontal";
+    let columns = Math.round(zoneW / spotW);
+    let rows = Math.round((zoneH - 18.2) / spotH);
 
+    for (let i = 0; i < count; i++) {
+      const idx = spots.length + i;
+      let col, row;
+      if (orientation === "horizontal") {
+        col = idx % columns;
+        row = Math.floor(idx / columns);
+        if (row >= rows) rows = row + 1;
+      } else {
+        row = idx % rows;
+        col = Math.floor(idx / rows);
+        if (col >= columns) columns = col + 1;
+      }
+      const sg = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      sg.setAttribute("class", "droppable eagleViewDropSpot");
+      sg.setAttribute(
+        "data-zone-name",
+        group.getAttribute("data-zone-name") || "",
+      );
+      if (group.getAttribute("data-zone-id")) {
+        sg.setAttribute("data-zone-id", group.getAttribute("data-zone-id"));
+      }
+      const seq = getNextSpotSequence();
+      const spotId = buildSpotId(facilityId, seq);
+      sg.setAttribute("data-sequence", seq);
+      sg.setAttribute("data-spot-id", spotId);
+      const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      r.setAttribute("x", col * spotW);
+      r.setAttribute("y", 18.2 + row * spotH);
+      r.setAttribute("width", spotW);
+      r.setAttribute("height", spotH);
+      r.setAttribute("fill", "transparent");
+      r.setAttribute("pointer-events", "none");
+      sg.appendChild(r);
+      group.appendChild(sg);
+    }
+
+    adjustGroupSize(group);
+    updateCounters();
+    rebuildLayersList();
+    updateZoneSpotText(group);
+  }
+
+  function removeZoneItems(group, count) {
+    const spots = group.querySelectorAll("g.eagleViewDropSpot");
+    if (!spots.length) return;
+    const removeCount = Math.min(count, spots.length);
+    if (spots.length === 1 && removeCount >= 1) {
+      const confirmDelete = confirm(
+        "Only one spot left. Removing it will delete the entire group. Continue?",
+      );
+      if (!confirmDelete) return;
+    }
+    const toRemove = Array.from(spots).slice(-removeCount);
+    toRemove.forEach((sp) => sp.remove());
+
+    if (spots.length - removeCount <= 0) {
+      deleteGroupDirect(group);
+      return;
+    }
+
+    adjustGroupSize(group);
+    updateCounters();
+    rebuildLayersList();
+    updateZoneSpotText(group);
+  }
+
+  function addItems(group, count, isDock) {
+    if (group.getAttribute("data-zone") === "yes") {
+      addZoneItems(group, count);
+      return;
+    }
+    const spots = group.querySelectorAll("g.eagleViewDropSpot");
+    if (!spots.length) return;
     const firstRect = spots[0].querySelector("rect");
     const spotW = parseFloat(firstRect.getAttribute("width"));
     const spotH = parseFloat(firstRect.getAttribute("height"));
@@ -3240,18 +3321,6 @@
         ascending = n2 > n1;
       }
     }
-  }
-  function addItems(group, count, isDock) {
-    const spots = group.querySelectorAll("g.eagleViewDropSpot");
-    if (!spots.length) return;
-    const firstRect = spots[0].querySelector("rect");
-    const spotW = parseFloat(firstRect.getAttribute("width"));
-    const spotH = parseFloat(firstRect.getAttribute("height"));
-    const orientation =
-      parseFloat(group.getAttribute("data-w")) >
-      parseFloat(group.getAttribute("data-h"))
-        ? "vertical"
-        : "horizontal";
     for (let i = 0; i < count; i++) {
       const idx = spots.length + i;
       const seq = getNextSpotSequence();
@@ -3339,10 +3408,6 @@
         );
       }
 
-      if (isDock) {
-        addDockTriangles(sg, spotId, x, y, spotW, spotH, "right", orientation);
-      }
-
       group.appendChild(sg);
       sg.classList.add("highlight-add");
       setTimeout(() => sg.classList.remove("highlight-add"), 2000);
@@ -3368,9 +3433,19 @@
   }
 
   function removeItems(group, count) {
+    if (group.getAttribute("data-zone") === "yes") {
+      removeZoneItems(group, count);
+      return;
+    }
     const spots = group.querySelectorAll("g.eagleViewDropSpot");
     if (!spots.length) return;
     const removeCount = Math.min(count, spots.length);
+    if (spots.length === 1 && removeCount >= 1) {
+      const confirmDelete = confirm(
+        "Only one spot left. Removing it will delete the entire group. Continue?",
+      );
+      if (!confirmDelete) return;
+    }
     const toRemove = Array.from(spots).slice(-removeCount);
     toRemove.forEach((sp) => {
       const rect = sp.querySelector("rect");
@@ -3391,6 +3466,11 @@
       sp.remove();
     });
 
+    if (spots.length - removeCount <= 0) {
+      deleteGroupDirect(group);
+      return;
+    }
+
     const labels = group.querySelectorAll(".spot-label");
     for (let i = 0; i < removeCount && labels.length; i++) {
       const lbl = labels[labels.length - 1 - i];
@@ -3410,12 +3490,8 @@
     const firstRect = spots[0].querySelector("rect");
     const spotW = parseFloat(firstRect.getAttribute("width"));
     const spotH = parseFloat(firstRect.getAttribute("height"));
-    const orientation =
-      parseFloat(group.getAttribute("data-w")) >
-      parseFloat(group.getAttribute("data-h"))
-        ? "vertical"
-        : "horizontal";
-    const remaining = spots.length - count;
+    const orientation = spotW > spotH ? "horizontal" : "vertical";
+    const remaining = spots.length - removeCount;
     if (orientation === "vertical") {
       group.setAttribute("data-w", Math.max(remaining, 1) * spotW);
     } else {
