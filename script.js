@@ -3495,11 +3495,6 @@
     const spotW = parseFloat(firstRect.getAttribute("width"));
     const spotH = parseFloat(firstRect.getAttribute("height"));
     const orientation = spotW > spotH ? "horizontal" : "vertical";
-    const orientation =
-      parseFloat(group.getAttribute("data-w")) >
-      parseFloat(group.getAttribute("data-h"))
-        ? "vertical"
-        : "horizontal";
     const remaining = spots.length - removeCount;
     if (orientation === "vertical") {
       group.setAttribute("data-w", Math.max(remaining, 1) * spotW);
