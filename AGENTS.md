@@ -14,6 +14,10 @@ These instructions apply to all files in this repository.
   ```bash
   npx prettier -c index.html script.js style.css
   ```
+- Lint all JavaScript changes before committing:
+  ```bash
+  npx eslint script.js
+  ```
 
 ## Commit Guidelines
 - Write concise, descriptive commit messages.
