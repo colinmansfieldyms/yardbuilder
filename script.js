@@ -3202,11 +3202,14 @@
   function addItems(group, count, isDock) {
     const spots = group.querySelectorAll("g.eagleViewDropSpot");
     if (!spots.length) return;
-
     const firstRect = spots[0].querySelector("rect");
     const spotW = parseFloat(firstRect.getAttribute("width"));
     const spotH = parseFloat(firstRect.getAttribute("height"));
-    const orientation = spotW > spotH ? "horizontal" : "vertical";
+    const orientation =
+      parseFloat(group.getAttribute("data-w")) >
+      parseFloat(group.getAttribute("data-h"))
+        ? "vertical"
+        : "horizontal";
 
     const firstLabel = group.querySelector(".spot-label");
     const hasLabels = !!firstLabel;
@@ -3240,18 +3243,6 @@
         ascending = n2 > n1;
       }
     }
-  }
-  function addItems(group, count, isDock) {
-    const spots = group.querySelectorAll("g.eagleViewDropSpot");
-    if (!spots.length) return;
-    const firstRect = spots[0].querySelector("rect");
-    const spotW = parseFloat(firstRect.getAttribute("width"));
-    const spotH = parseFloat(firstRect.getAttribute("height"));
-    const orientation =
-      parseFloat(group.getAttribute("data-w")) >
-      parseFloat(group.getAttribute("data-h"))
-        ? "vertical"
-        : "horizontal";
     for (let i = 0; i < count; i++) {
       const idx = spots.length + i;
       const seq = getNextSpotSequence();
@@ -3339,10 +3330,6 @@
         );
       }
 
-      if (isDock) {
-        addDockTriangles(sg, spotId, x, y, spotW, spotH, "right", orientation);
-      }
-
       group.appendChild(sg);
       sg.classList.add("highlight-add");
       setTimeout(() => sg.classList.remove("highlight-add"), 2000);
@@ -3371,6 +3358,12 @@
     const spots = group.querySelectorAll("g.eagleViewDropSpot");
     if (!spots.length) return;
     const removeCount = Math.min(count, spots.length);
+    if (spots.length === 1 && removeCount >= 1) {
+      const confirmDelete = confirm(
+        "Only one spot left. Removing it will delete the entire group. Continue?",
+      );
+      if (!confirmDelete) return;
+    }
     const toRemove = Array.from(spots).slice(-removeCount);
     toRemove.forEach((sp) => {
       const rect = sp.querySelector("rect");
@@ -3390,6 +3383,11 @@
       }
       sp.remove();
     });
+
+    if (spots.length - removeCount <= 0) {
+      deleteGroupDirect(group);
+      return;
+    }
 
     const labels = group.querySelectorAll(".spot-label");
     for (let i = 0; i < removeCount && labels.length; i++) {
@@ -3415,7 +3413,7 @@
       parseFloat(group.getAttribute("data-h"))
         ? "vertical"
         : "horizontal";
-    const remaining = spots.length - count;
+    const remaining = spots.length - removeCount;
     if (orientation === "vertical") {
       group.setAttribute("data-w", Math.max(remaining, 1) * spotW);
     } else {
