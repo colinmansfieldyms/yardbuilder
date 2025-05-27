@@ -3074,7 +3074,13 @@
         10,
       );
       if (Number.isNaN(num) || num <= 0) return;
-      addItems(contextTarget, num, contextType === "dock");
+
+      if (contextTarget.getAttribute("data-zone") === "yes") {
+        addZoneItems(contextTarget, num);
+      } else {
+        addItems(contextTarget, num, contextType === "dock");
+      }
+      
     } else if (action === "remove-items") {
       if (!contextType) return;
       const num = parseInt(
