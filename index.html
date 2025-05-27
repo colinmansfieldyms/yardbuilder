@@ -79,34 +79,6 @@
           <span class="collapse-icon" id="collapseIcon">☰</span>
         </div>
 
-        <!-- FACILITY ID INPUT (inline) -->
-        <div class="facility-inline">
-          <label for="facilityNumberInput" style="white-space: nowrap">
-            #️⃣ Facility Number:
-          </label>
-          <span class="tooltip-container">
-            <span class="tooltip-text">
-              Please enter which facility this is. For example, if this is the
-              second facility being implemented, enter "2".
-            </span>
-          </span>
-          <input id="facilityNumberInput" type="number" value="1" min="1" />
-        </div>
-
-        <!-- STARTING ZONE NUMBER INPUT (inline) -->
-        <div class="facility-inline">
-          <label for="startingZoneNumberInput" style="white-space: nowrap">
-            #️⃣ Starting Zone #:
-          </label>
-          <span class="tooltip-container">
-            <span class="tooltip-text">
-              Enter the zone number you want to start from. Changing this value
-              will renumber all existing zones.
-            </span>
-          </span>
-          <input id="startingZoneNumberInput" type="number" value="1" min="1" />
-        </div>
-
         <!-- Snap to Grid Toggle Section -->
         <div class="toggle-section">
           <label for="snapToGridToggle">🔳 Snap to Grid</label>
@@ -495,6 +467,38 @@
             <span class="collapse-icon">▼</span>
           </div>
           <div class="menu-content" id="advancedMenu">
+            <div class="facility-inline">
+              <label for="facilityNumberInput" style="white-space: nowrap"
+                >#️⃣ Facility Number:</label
+              >
+              <span class="tooltip-container">
+                <span class="tooltip-text">
+                  Please enter which facility this is. For example, if this is
+                  the second facility being implemented, enter "2".
+                </span>
+              </span>
+              <input id="facilityNumberInput" type="number" value="1" min="1" />
+            </div>
+
+            <div class="facility-inline">
+              <label for="startingZoneNumberInput" style="white-space: nowrap"
+                >#️⃣ Starting Zone #:</label
+              >
+              <span class="tooltip-container">
+                <span class="tooltip-text">
+                  Enter the zone number you want to start from. Changing this
+                  value will renumber all existing zones.
+                </span>
+              </span>
+              <input
+                id="startingZoneNumberInput"
+                type="number"
+                value="1"
+                min="1"
+              />
+            </div>
+            <hr />
+
             <p style="color: #ffd700">
               Changing the scale will affect layout and may disrupt existing
               placements.
@@ -664,6 +668,7 @@
           <h3>Layers</h3>
           <span class="collapse-icon" id="layersCollapseIcon">☰</span>
         </div>
+        <p class="layers-note">Drag to re-order. Right click to delete.</p>
         <ul id="layersList"></ul>
       </div>
     </div>
@@ -682,7 +687,7 @@
       <li data-action="bring-forward">Send Forward</li>
       <li data-action="send-backward">Send Backward</li>
       <li data-action="send-back">Send to Back</li>
-      <li data-action="delete">Delete</li>
+      <li data-action="delete" class="delete-action">🗑️ Delete</li>
       <li id="contextAdd" data-action="add-items" style="color: #0f0">
         ⊕ Add Spots
       </li>
