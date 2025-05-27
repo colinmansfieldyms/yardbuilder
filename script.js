@@ -1474,6 +1474,24 @@
       document.body.removeChild(puff);
     }, 800);
   }
+
+  function showDeleteConfirm(onYes) {
+    const overlay = document.createElement("div");
+    overlay.className = "confirm-overlay";
+    const box = document.createElement("div");
+    box.className = "confirm-box";
+    box.innerHTML =
+      '<p>Are you sure you want to delete this element?</p><div class="confirm-buttons"><button id="confirmYes">Yes</button><button id="confirmNo">No</button></div>';
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+    overlay.querySelector("#confirmYes").addEventListener("click", () => {
+      document.body.removeChild(overlay);
+      onYes();
+    });
+    overlay.querySelector("#confirmNo").addEventListener("click", () => {
+      document.body.removeChild(overlay);
+    });
+  }
   function rectOverlap(r1, r2) {
     return !(
       r2.left > r1.right ||
@@ -3245,8 +3263,17 @@
     } else if (action === "send-back") {
       parent.insertBefore(contextTarget, parent.firstChild);
     } else if (action === "delete") {
-      deleteGroupDirect(contextTarget);
-      contextTarget = null;
+      layerContextMenu.style.display = "none";
+      const target = contextTarget;
+      showDeleteConfirm(() => {
+        deleteGroupDirect(target);
+        contextTarget = null;
+        ensureLostBoxOnTop();
+        rebuildLayersList();
+        rebuildZonesTable();
+        updateCounters();
+      });
+      return;
     } else if (action === "add-items") {
       if (!contextType) return;
       const num = parseInt(
