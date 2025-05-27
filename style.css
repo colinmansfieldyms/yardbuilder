@@ -753,3 +753,34 @@ input:checked + .slider:before {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* Redo Button Styling */
+#redoBtn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background-color 0.2s,
+    transform 0.2s;
+  border-radius: 4px;
+}
+
+#redoBtn:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  transform: scale(1.05);
+}
+
+#redoBtn svg {
+  fill: #eeeeee;
+  width: 16px;
+  height: 16px;
+  transform: scaleX(-1);
+}
+#redoBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

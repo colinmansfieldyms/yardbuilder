@@ -6,16 +6,20 @@
   // UNDO / CTRL+Z Support
   // -------------------------------
   document.addEventListener("keydown", (e) => {
-    // Mac users often use metaKey (Command) instead of ctrlKey
     const key = e.key.toLowerCase();
-    const isUndoKey = (e.ctrlKey || e.metaKey) && key === "z";
-    if (isUndoKey) {
+    const isZ = key === "z";
+    if (isZ && (e.ctrlKey || e.metaKey)) {
       e.preventDefault();
-      undoLastAction();
+      if (e.shiftKey) {
+        redoLastAction();
+      } else {
+        undoLastAction();
+      }
     }
   });
 
   let undoStack = [];
+  let redoStack = [];
 
   /**
    * pushUndoAction()
@@ -32,7 +36,9 @@
    */
   function pushUndoAction(action) {
     undoStack.push(action);
+    redoStack = [];
     updateUndoButtonState();
+    updateRedoButtonState();
   }
 
   /**
@@ -43,23 +49,21 @@
    */
   function undoLastAction() {
     if (undoStack.length === 0) {
-      return; // nothing to undo
+      return;
     }
 
     const action = undoStack.pop();
-    if (!action.element) return;
 
     if (action.type === "move") {
-      // Revert move
       action.element.setAttribute(
         "transform",
         `translate(${action.oldX},${action.oldY})`,
       );
+      redoStack.push(action);
     } else if (action.type === "resize") {
-      // Revert resize
       updateElementSize(action.element, action.oldWidth, action.oldHeight);
+      redoStack.push(action);
     } else if (action.type === "delete") {
-      // Undo delete by re-inserting the cloned element
       const { element, parent, index, oldX, oldY } = action;
       if (parent && element) {
         const children = Array.from(parent.children);
@@ -71,15 +75,100 @@
         element.setAttribute("transform", `translate(${oldX},${oldY})`);
         element.setAttribute("data-type", "draggable");
         element.setAttribute("style", "cursor: move;");
-
-        // Optionally, update zones and counters
         rebuildZonesTable();
         updateCounters();
         ensureLostBoxOnTop();
         rebuildLayersList();
+        redoStack.push({
+          type: "delete",
+          element,
+          parent,
+          index,
+          oldX,
+          oldY,
+        });
       }
+    } else if (action.type === "group-modify") {
+      const g = document.querySelector(
+        `#scalableContent > g[data-layer-id="${action.elementId}"]`,
+      );
+      if (g && action.before) {
+        const clone = action.before.cloneNode(true);
+        g.parentNode.replaceChild(clone, g);
+        rebuildZonesTable();
+        updateCounters();
+        ensureLostBoxOnTop();
+        rebuildLayersList();
+        redoStack.push({
+          type: "group-modify",
+          elementId: action.elementId,
+          before: action.after,
+          after: action.before,
+        });
+      }
+    } else if (action.type === "reorder") {
+      applyLayerOrder(action.before);
+      redoStack.push({
+        type: "reorder",
+        before: action.after,
+        after: action.before,
+      });
     }
     updateUndoButtonState();
+    updateRedoButtonState();
+  }
+
+  function redoLastAction() {
+    if (redoStack.length === 0) {
+      return;
+    }
+
+    const action = redoStack.pop();
+
+    if (action.type === "move") {
+      action.element.setAttribute(
+        "transform",
+        `translate(${action.newX},${action.newY})`,
+      );
+      undoStack.push(action);
+    } else if (action.type === "resize") {
+      updateElementSize(action.element, action.newWidth, action.newHeight);
+      undoStack.push(action);
+    } else if (action.type === "delete") {
+      if (action.element) {
+        action.element.remove();
+        rebuildZonesTable();
+        updateCounters();
+        undoStack.push(action);
+      }
+    } else if (action.type === "group-modify") {
+      const g = document.querySelector(
+        `#scalableContent > g[data-layer-id="${action.elementId}"]`,
+      );
+      if (g && action.before) {
+        const clone = action.before.cloneNode(true);
+        g.parentNode.replaceChild(clone, g);
+        rebuildZonesTable();
+        updateCounters();
+        ensureLostBoxOnTop();
+        rebuildLayersList();
+        undoStack.push({
+          type: "group-modify",
+          elementId: action.elementId,
+          before: action.after,
+          after: action.before,
+        });
+      }
+    } else if (action.type === "reorder") {
+      applyLayerOrder(action.before);
+      undoStack.push({
+        type: "reorder",
+        before: action.after,
+        after: action.before,
+      });
+    }
+    updateUndoButtonState();
+    updateRedoButtonState();
   }
 
   // -------------------------------
@@ -88,11 +177,17 @@
 
   // Select the Undo button
   const undoBtn = document.getElementById("undoBtn");
+  const redoBtn = document.getElementById("redoBtn");
 
   // Check if the button exists to avoid errors
   if (undoBtn) {
     undoBtn.addEventListener("click", () => {
       undoLastAction();
+    });
+  }
+  if (redoBtn) {
+    redoBtn.addEventListener("click", () => {
+      redoLastAction();
     });
   }
 
@@ -110,6 +205,21 @@
     }
   }
   updateUndoButtonState();
+
+  function updateRedoButtonState() {
+    if (redoBtn) {
+      if (redoStack.length > 0) {
+        redoBtn.disabled = false;
+        redoBtn.style.opacity = "1";
+        redoBtn.style.cursor = "pointer";
+      } else {
+        redoBtn.disabled = true;
+        redoBtn.style.opacity = "0.5";
+        redoBtn.style.cursor = "not-allowed";
+      }
+    }
+  }
+  updateRedoButtonState();
 
   // -------------------------------
   // SIDEBAR COLLAPSE
@@ -1267,8 +1377,9 @@
       const siblings = Array.from(parent.children);
       const index = siblings.indexOf(group);
       const clonedGroup = group.cloneNode(true); // Deep clone
-      const originalX = group.__undoData ? group.__undoData.oldX : 0;
-      const originalY = group.__undoData ? group.__undoData.oldY : 0;
+      const [tx, ty] = getTranslation(group);
+      const originalX = group.__undoData ? group.__undoData.oldX : tx;
+      const originalY = group.__undoData ? group.__undoData.oldY : ty;
 
       // -- 2) Push delete action to undoStack
       pushUndoAction({
@@ -1303,8 +1414,9 @@
     const siblings = Array.from(parent.children);
     const index = siblings.indexOf(group);
     const clonedGroup = group.cloneNode(true);
-    const originalX = group.__undoData ? group.__undoData.oldX : 0;
-    const originalY = group.__undoData ? group.__undoData.oldY : 0;
+    const [tx, ty] = getTranslation(group);
+    const originalX = group.__undoData ? group.__undoData.oldX : tx;
+    const originalY = group.__undoData ? group.__undoData.oldY : ty;
 
     pushUndoAction({
       type: "delete",
@@ -2942,9 +3054,11 @@
 
   let draggedItem = null;
   let dragStartX = 0;
+  let layerOrderBefore = [];
   layersList.addEventListener("dragstart", (e) => {
     draggedItem = e.target;
     dragStartX = e.clientX;
+    layerOrderBefore = getLayerOrder();
     e.target.classList.add("dragging");
   });
   layersList.addEventListener("dragend", (e) => {
@@ -2969,6 +3083,7 @@
     const order = Array.from(layersList.children).map(
       (li) => li.dataset.targetId,
     );
+    const before = layerOrderBefore.length ? layerOrderBefore : getLayerOrder();
     order.reverse().forEach((id) => {
       const g = scalable.querySelector(`[data-layer-id="${id}"]`);
       if (g && g !== lost) {
@@ -2977,6 +3092,42 @@
     });
     ensureLostBoxOnTop();
     rebuildLayersList();
+    const after = getLayerOrder();
+    if (JSON.stringify(before) !== JSON.stringify(after)) {
+      pushUndoAction({ type: "reorder", before, after });
+    }
+    layerOrderBefore = [];
+  }
+
+  function getLayerOrder() {
+    return Array.from(document.querySelectorAll("#scalableContent > g"))
+      .filter((g) => !g.classList.contains("lostTrailer"))
+      .map((g) => g.getAttribute("data-layer-id"));
+  }
+
+  function applyLayerOrder(order) {
+    const scalable = document.getElementById("scalableContent");
+    const lost = scalable.querySelector("g.lostTrailer");
+    order
+      .slice()
+      .reverse()
+      .forEach((id) => {
+        const g = scalable.querySelector(`[data-layer-id="${id}"]`);
+        if (g && g !== lost) {
+          scalable.insertBefore(g, lost || null);
+        }
+      });
+    ensureLostBoxOnTop();
+    rebuildLayersList();
+  }
+
+  function pushGroupChange(group, beforeClone) {
+    pushUndoAction({
+      type: "group-modify",
+      elementId: group.getAttribute("data-layer-id"),
+      before: beforeClone,
+      after: group.cloneNode(true),
+    });
   }
 
   document
@@ -3051,6 +3202,7 @@
     if (!action || !contextTarget) return;
     if (contextTarget.classList.contains("lostTrailer")) return;
     const parent = contextTarget.parentNode;
+    const beforeOrder = getLayerOrder();
     if (action === "bring-front") {
       parent.appendChild(contextTarget);
     } else if (action === "bring-forward") {
@@ -3080,7 +3232,6 @@
       } else {
         addItems(contextTarget, num, contextType === "dock");
       }
-      
     } else if (action === "remove-items") {
       if (!contextType) return;
       const num = parseInt(
@@ -3094,6 +3245,14 @@
       removeItems(contextTarget, num);
     } else if (action === "edit-first") {
       editFirstNumber(contextTarget);
+    }
+    const afterOrder = getLayerOrder();
+    if (JSON.stringify(beforeOrder) !== JSON.stringify(afterOrder)) {
+      pushUndoAction({
+        type: "reorder",
+        before: beforeOrder,
+        after: afterOrder,
+      });
     }
     ensureLostBoxOnTop();
     layerContextMenu.style.display = "none";
@@ -3205,6 +3364,7 @@
   }
 
   function addZoneItems(group, count) {
+    const before = group.cloneNode(true);
     const spots = group.querySelectorAll("g.eagleViewDropSpot");
     if (!spots.length) return;
 
@@ -3229,33 +3389,32 @@
       const idx = origCount + i;
 
       // compute x,y for a *single* row or column
-      const x = orientation === "horizontal" 
-        ? idx * spotW 
-        : 0;
-      const y = orientation === "horizontal"
-        ? headerOffset
-        : headerOffset + idx * spotH;
+      const x = orientation === "horizontal" ? idx * spotW : 0;
+      const y =
+        orientation === "horizontal"
+          ? headerOffset
+          : headerOffset + idx * spotH;
 
       // build the spot
       const sg = document.createElementNS("http://www.w3.org/2000/svg", "g");
       sg.setAttribute("class", "droppable eagleViewDropSpot");
       sg.setAttribute("data-zone-name", group.getAttribute("data-zone-name"));
-      sg.setAttribute("data-zone-id",   group.getAttribute("data-zone-id"));
+      sg.setAttribute("data-zone-id", group.getAttribute("data-zone-id"));
 
       // assign IDs
-      const seq   = getNextSpotSequence();
-      const spotId= buildSpotId(facilityId, seq);
+      const seq = getNextSpotSequence();
+      const spotId = buildSpotId(facilityId, seq);
       sg.setAttribute("data-sequence", seq);
-      sg.setAttribute("data-spot-id",  spotId);
+      sg.setAttribute("data-spot-id", spotId);
 
       // invisible rect
-      const r = document.createElementNS("http://www.w3.org/2000/svg","rect");
+      const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
       r.setAttribute("x", x);
       r.setAttribute("y", y);
-      r.setAttribute("width",  spotW);
+      r.setAttribute("width", spotW);
       r.setAttribute("height", spotH);
-      r.setAttribute("fill",   "transparent");
-      r.setAttribute("pointer-events","none");
+      r.setAttribute("fill", "transparent");
+      r.setAttribute("pointer-events", "none");
       sg.appendChild(r);
 
       group.appendChild(sg);
@@ -3266,9 +3425,11 @@
     updateCounters();
     rebuildLayersList();
     updateZoneSpotText(group);
+    pushGroupChange(group, before);
   }
 
   function removeZoneItems(group, count) {
+    const before = group.cloneNode(true);
     const spots = group.querySelectorAll("g.eagleViewDropSpot");
     if (!spots.length) return;
     const removeCount = Math.min(count, spots.length);
@@ -3290,9 +3451,11 @@
     updateCounters();
     rebuildLayersList();
     updateZoneSpotText(group);
+    pushGroupChange(group, before);
   }
 
   function addItems(group, count, isDock) {
+    const before = group.cloneNode(true);
     const spots = group.querySelectorAll("g.eagleViewDropSpot");
     if (!spots.length) return;
     const firstRect = spots[0].querySelector("rect");
@@ -3447,9 +3610,11 @@
     if (group.getAttribute("data-zone") === "yes") {
       updateZoneSpotText(group);
     }
+    pushGroupChange(group, before);
   }
 
   function removeItems(group, count) {
+    const before = group.cloneNode(true);
     if (group.getAttribute("data-zone") === "yes") {
       removeZoneItems(group, count);
       return;
@@ -3529,6 +3694,7 @@
     if (group.getAttribute("data-zone") === "yes") {
       updateZoneSpotText(group);
     }
+    pushGroupChange(group, before);
   }
 
   function updateZoneSpotText(group) {
@@ -3544,6 +3710,7 @@
   }
 
   function editFirstNumber(group) {
+    const before = group.cloneNode(true);
     const firstLabel = group.querySelector(".spot-label");
     if (!firstLabel) return;
     const m = firstLabel.textContent.match(/^(\D*)(\d+)(.*)$/);
@@ -3587,6 +3754,7 @@
     labels.forEach((lbl, idx) => {
       lbl.textContent = prefix + (start + idx) + suffix;
     });
+    pushGroupChange(group, before);
   }
 
   rebuildLostBox();
