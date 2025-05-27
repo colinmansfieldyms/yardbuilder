@@ -56,3 +56,6 @@ YardBuilder accelerates **pre-sales** and **onboarding workflows** by giving tea
 ## 📩 Questions or Feedback?
 
 Please direct any bug reports, feature requests, or usability questions to **Colin Mansfield**.
+
+This tool and all associated creations using it are copyright © Yard Management Solutions LLC.
+This tool, its code, and all associated creations using it are not for public use and are considered confidential and propietary. 
