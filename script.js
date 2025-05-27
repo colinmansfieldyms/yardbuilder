@@ -3207,53 +3207,61 @@
   function addZoneItems(group, count) {
     const spots = group.querySelectorAll("g.eagleViewDropSpot");
     if (!spots.length) return;
+
+    // measure one spot
     const firstRect = spots[0].querySelector("rect");
     const spotW = parseFloat(firstRect.getAttribute("width"));
     const spotH = parseFloat(firstRect.getAttribute("height"));
-    let zoneW = parseFloat(group.getAttribute("data-w"));
-    let zoneH = parseFloat(group.getAttribute("data-h"));
+
+    // keep the header offset
+    const headerOffset = 18.2;
+
+    // orientation: 'horizontal' => one row, marching X
+    //              'vertical'   => one column, marching Y
     const orientation =
       group.getAttribute("data-orientation") ||
       (spotW > spotH ? "vertical" : "horizontal");
-    let columns = Math.round(zoneW / spotW);
-    let rows = Math.round((zoneH - 18.2) / spotH);
+
+    // count how many already exist
+    const origCount = spots.length;
 
     for (let i = 0; i < count; i++) {
-      const idx = spots.length + i;
-      let col, row;
-      if (orientation === "horizontal") {
-        col = idx % columns;
-        row = Math.floor(idx / columns);
-        if (row >= rows) rows = row + 1;
-      } else {
-        row = idx % rows;
-        col = Math.floor(idx / rows);
-        if (col >= columns) columns = col + 1;
-      }
+      const idx = origCount + i;
+
+      // compute x,y for a *single* row or column
+      const x = orientation === "horizontal" 
+        ? idx * spotW 
+        : 0;
+      const y = orientation === "horizontal"
+        ? headerOffset
+        : headerOffset + idx * spotH;
+
+      // build the spot
       const sg = document.createElementNS("http://www.w3.org/2000/svg", "g");
       sg.setAttribute("class", "droppable eagleViewDropSpot");
-      sg.setAttribute(
-        "data-zone-name",
-        group.getAttribute("data-zone-name") || "",
-      );
-      if (group.getAttribute("data-zone-id")) {
-        sg.setAttribute("data-zone-id", group.getAttribute("data-zone-id"));
-      }
-      const seq = getNextSpotSequence();
-      const spotId = buildSpotId(facilityId, seq);
+      sg.setAttribute("data-zone-name", group.getAttribute("data-zone-name"));
+      sg.setAttribute("data-zone-id",   group.getAttribute("data-zone-id"));
+
+      // assign IDs
+      const seq   = getNextSpotSequence();
+      const spotId= buildSpotId(facilityId, seq);
       sg.setAttribute("data-sequence", seq);
-      sg.setAttribute("data-spot-id", spotId);
-      const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-      r.setAttribute("x", col * spotW);
-      r.setAttribute("y", 18.2 + row * spotH);
-      r.setAttribute("width", spotW);
+      sg.setAttribute("data-spot-id",  spotId);
+
+      // invisible rect
+      const r = document.createElementNS("http://www.w3.org/2000/svg","rect");
+      r.setAttribute("x", x);
+      r.setAttribute("y", y);
+      r.setAttribute("width",  spotW);
       r.setAttribute("height", spotH);
-      r.setAttribute("fill", "transparent");
-      r.setAttribute("pointer-events", "none");
+      r.setAttribute("fill",   "transparent");
+      r.setAttribute("pointer-events","none");
       sg.appendChild(r);
+
       group.appendChild(sg);
     }
 
+    // now recalc the zone’s outline / hitbox / counts / layers
     adjustGroupSize(group);
     updateCounters();
     rebuildLayersList();
