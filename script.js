@@ -959,7 +959,13 @@
     const spots = canvasSVG.querySelectorAll(
       "g.eagleViewDropSpot:not(.lostTrailer)",
     );
-    spots.forEach((spot) => spot.classList.add("highlighted"));
+    spots.forEach((spot) => {
+      const hasLoadingTriangle = spot.querySelector(".loading_triangle");
+      const hasUnloadingTriangle = spot.querySelector(".unloading_triangle");
+      if (!hasLoadingTriangle && !hasUnloadingTriangle) {
+        spot.classList.remove("highlighted");
+      }
+    });
   }
   function highlightAllDocks() {
     const spots = canvasSVG.querySelectorAll("g.eagleViewDropSpot");
