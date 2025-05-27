@@ -573,7 +573,8 @@ input:checked + .slider:before {
   width: 40px;
 }
 .layers-sidebar.collapsed h3,
-.layers-sidebar.collapsed #layersList {
+.layers-sidebar.collapsed #layersList,
+.layers-sidebar.collapsed .layers-note {
   display: none;
 }
 .layers-sidebar.collapsed .layers-header {
