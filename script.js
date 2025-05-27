@@ -3247,7 +3247,11 @@
       editFirstNumber(contextTarget);
     }
     const afterOrder = getLayerOrder();
-    if (JSON.stringify(beforeOrder) !== JSON.stringify(afterOrder)) {
+    if (
+      contextTarget &&
+      contextTarget.isConnected &&
+      JSON.stringify(beforeOrder) !== JSON.stringify(afterOrder)
+    ) {
       pushUndoAction({
         type: "reorder",
         before: beforeOrder,
