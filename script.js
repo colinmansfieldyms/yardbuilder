@@ -943,6 +943,40 @@
     if (g) g.classList.remove("highlighted");
   }
 
+  function highlightAllSpots() {
+    const spots = canvasSVG.querySelectorAll(
+      "g.eagleViewDropSpot:not(.lostTrailer)",
+    );
+    spots.forEach((spot) => {
+      const hasLoadingTriangle = spot.querySelector(".loading_triangle");
+      const hasUnloadingTriangle = spot.querySelector(".unloading_triangle");
+      if (!hasLoadingTriangle && !hasUnloadingTriangle) {
+        spot.classList.add("highlighted");
+      }
+    });
+  }
+  function removeHighlightAllSpots() {
+    const spots = canvasSVG.querySelectorAll(
+      "g.eagleViewDropSpot:not(.lostTrailer)",
+    );
+    spots.forEach((spot) => spot.classList.remove("highlighted"));
+  }
+  function highlightAllDocks() {
+    const spots = canvasSVG.querySelectorAll("g.eagleViewDropSpot");
+    spots.forEach((spot) => {
+      if (
+        spot.querySelector(".loading_triangle") ||
+        spot.querySelector(".unloading_triangle")
+      ) {
+        spot.classList.add("highlighted");
+      }
+    });
+  }
+  function removeHighlightAllDocks() {
+    const spots = canvasSVG.querySelectorAll("g.eagleViewDropSpot");
+    spots.forEach((spot) => spot.classList.remove("highlighted"));
+  }
+
   function addZoneToTable(zoneName, zoneId) {
     // 1) Count current total
     const allZoneSpots = canvasSVG.querySelectorAll(
@@ -2464,6 +2498,9 @@
   // COUNTERS: Total Spots and Docks (Excluding Lost Box)
   // -------------------------------
 
+  const totalSpotsElem = document.getElementById("totalSpots");
+  const totalDocksElem = document.getElementById("totalDocks");
+
   function updateCounters() {
     // Select all spot groups excluding those with the 'lostTrailer' class
     const allSpots = canvasSVG.querySelectorAll(
@@ -2489,8 +2526,6 @@
     });
 
     // Update the DOM elements with the new counts
-    const totalSpotsElem = document.getElementById("totalSpots");
-    const totalDocksElem = document.getElementById("totalDocks");
 
     if (totalSpotsElem) {
       totalSpotsElem.textContent = `Spots: ${totalSpots}`;
@@ -2503,6 +2538,15 @@
 
   // Initial call to set counters on page load
   updateCounters();
+
+  if (totalSpotsElem) {
+    totalSpotsElem.addEventListener("mouseover", highlightAllSpots);
+    totalSpotsElem.addEventListener("mouseout", removeHighlightAllSpots);
+  }
+  if (totalDocksElem) {
+    totalDocksElem.addEventListener("mouseover", highlightAllDocks);
+    totalDocksElem.addEventListener("mouseout", removeHighlightAllDocks);
+  }
 
   // -------------------------------
   // Magnetize
