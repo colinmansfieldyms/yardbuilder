@@ -2190,6 +2190,7 @@
     group.setAttribute("data-h", zoneH);
     group.setAttribute("data-zone", "yes");
     group.setAttribute("data-zone-id", thisZoneId);
+    group.setAttribute("data-orientation", zTypeV);
 
     const hitbox = document.createElementNS(
       "http://www.w3.org/2000/svg",
@@ -3120,7 +3121,8 @@
     const firstRect = spots[0].querySelector("rect");
     const spotW = parseFloat(firstRect.getAttribute("width"));
     const spotH = parseFloat(firstRect.getAttribute("height"));
-    const orientation = spotW > spotH ? "vertical" : "horizontal";
+    let orientation = group.getAttribute("data-orientation");
+    if (!orientation) orientation = spotW > spotH ? "vertical" : "horizontal";
 
     if (group.getAttribute("data-zone") === "yes") {
       let maxX = 0;
@@ -3204,7 +3206,9 @@
     const spotH = parseFloat(firstRect.getAttribute("height"));
     let zoneW = parseFloat(group.getAttribute("data-w"));
     let zoneH = parseFloat(group.getAttribute("data-h"));
-    const orientation = zoneH - 18.2 > zoneW ? "vertical" : "horizontal";
+    const orientation =
+      group.getAttribute("data-orientation") ||
+      (spotW > spotH ? "vertical" : "horizontal");
     let columns = Math.round(zoneW / spotW);
     let rows = Math.round((zoneH - 18.2) / spotH);
 
@@ -3280,13 +3284,14 @@
     const firstRect = spots[0].querySelector("rect");
     const spotW = parseFloat(firstRect.getAttribute("width"));
     const spotH = parseFloat(firstRect.getAttribute("height"));
-    const orientation = group.getAttribute("data-orientation")
-      || (
+    let orientation = group.getAttribute("data-orientation");
+    if (!orientation) {
+      orientation =
         parseFloat(group.getAttribute("data-w")) >
         parseFloat(group.getAttribute("data-h"))
-          ? "horizontal"
-          : "vertical"
-        ); 
+          ? "vertical"
+          : "horizontal";
+    }
     const firstLabel = group.querySelector(".spot-label");
     const hasLabels = !!firstLabel;
     const labelLocation = hasLabels
@@ -3480,7 +3485,7 @@
       const ln = lines[lines.length - 1 - i];
       if (ln) ln.remove();
     }
- 
+
     adjustGroupSize(group);
     updateCounters();
     rebuildLayersList();
@@ -3488,11 +3493,14 @@
     const firstRect = spots[0].querySelector("rect");
     const spotW = parseFloat(firstRect.getAttribute("width"));
     const spotH = parseFloat(firstRect.getAttribute("height"));
-    const orientation =
-      parseFloat(group.getAttribute("data-w")) >
-      parseFloat(group.getAttribute("data-h"))
-        ? "vertical"
-        : "horizontal";
+    let orientation = group.getAttribute("data-orientation");
+    if (!orientation) {
+      orientation =
+        parseFloat(group.getAttribute("data-w")) >
+        parseFloat(group.getAttribute("data-h"))
+          ? "vertical"
+          : "horizontal";
+    }
     const remaining = spots.length - removeCount;
     if (orientation === "vertical") {
       group.setAttribute("data-w", Math.max(remaining, 1) * spotW);
@@ -3535,7 +3543,8 @@
     if (!firstRect) return;
     const spotW = parseFloat(firstRect.getAttribute("width"));
     const spotH = parseFloat(firstRect.getAttribute("height"));
-    const orientation = spotW > spotH ? "vertical" : "horizontal";
+    let orientation = group.getAttribute("data-orientation");
+    if (!orientation) orientation = spotW > spotH ? "vertical" : "horizontal";
     const labelLocation = inferLabelLocation(firstLabel, orientation);
     const rotationMode = firstLabel.getAttribute("transform")
       ? "90"
