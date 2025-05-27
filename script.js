@@ -3205,7 +3205,9 @@
     const spotH = parseFloat(firstRect.getAttribute("height"));
     let zoneW = parseFloat(group.getAttribute("data-w"));
     let zoneH = parseFloat(group.getAttribute("data-h"));
-    const orientation = zoneH - 18.2 > zoneW ? "vertical" : "horizontal";
+    let orientation = group.getAttribute("data-orientation");
+    if (!orientation)
+      orientation = zoneH - 18.2 > zoneW ? "vertical" : "horizontal";
     let columns = Math.round(zoneW / spotW);
     let rows = Math.round((zoneH - 18.2) / spotH);
 
