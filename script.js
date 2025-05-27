@@ -3108,15 +3108,12 @@
   function applyLayerOrder(order) {
     const scalable = document.getElementById("scalableContent");
     const lost = scalable.querySelector("g.lostTrailer");
-    order
-      .slice()
-      .reverse()
-      .forEach((id) => {
-        const g = scalable.querySelector(`[data-layer-id="${id}"]`);
-        if (g && g !== lost) {
-          scalable.insertBefore(g, lost || null);
-        }
-      });
+    order.forEach((id) => {
+      const g = scalable.querySelector(`[data-layer-id="${id}"]`);
+      if (g && g !== lost) {
+        scalable.insertBefore(g, lost || null);
+      }
+    });
     ensureLostBoxOnTop();
     rebuildLayersList();
   }
