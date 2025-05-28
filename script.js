@@ -2687,6 +2687,15 @@
     scaleDisplay.textContent = scaleVal.toFixed(1);
   }
 
+  function sanitizeHighlighting(root) {
+    if (!root) return;
+    root.querySelectorAll(".highlight-remove").forEach((el) => el.remove());
+    root.querySelectorAll(".highlighted, .highlight-add").forEach((el) => {
+      el.classList.remove("highlighted");
+      el.classList.remove("highlight-add");
+    });
+  }
+
   canvasScaleInput.addEventListener("input", () => {
     const scaleVal = parseFloat(canvasScaleInput.value);
     applyScale(scaleVal);
@@ -2783,6 +2792,8 @@
     groupsForExport.forEach((g, idx) => {
       g.setAttribute("data-layer-index", idx);
     });
+
+    sanitizeHighlighting(canvasSVG);
 
     const serializer = new XMLSerializer();
     let source = serializer.serializeToString(canvasSVG);
@@ -2882,6 +2893,8 @@
     while (importedScalable.firstChild) {
       myScalableContent.appendChild(importedScalable.firstChild);
     }
+
+    sanitizeHighlighting(myScalableContent);
 
     myScalableContent.querySelectorAll(":scope > g").forEach((g) => {
       if (g.hasAttribute("data-w") && g.hasAttribute("data-h")) {
