@@ -657,6 +657,10 @@
   const contextEditFirst = document.getElementById("contextEditFirst");
   let contextTarget = null;
   let contextType = null; // 'dock' or 'spot'
+
+  const hideContextMenu = document.getElementById("hideContextMenu");
+  const hideContextOption = document.getElementById("hideContextOption");
+  let hideContextType = null; // 'trash' or 'lost'
   document
     .getElementById("bodyWrapper")
     .classList.toggle(
@@ -797,6 +801,7 @@
     ensureLostBoxOnTop();
     rebuildLayersList();
     ensureLostBoxOnTop();
+    attachLostBoxContextMenu();
   }
 
   function createLostBoxGroup(lType, facId) {
@@ -895,6 +900,19 @@
     return group;
   }
 
+  function lostBoxContextHandler(e) {
+    e.preventDefault();
+    hideContextType = "lost";
+    hideContextMenu.style.display = "block";
+    hideContextMenu.style.left = e.clientX + "px";
+    hideContextMenu.style.top = e.clientY + "px";
+  }
+
+  function attachLostBoxContextMenu() {
+    if (!lostBoxGroup) return;
+    lostBoxGroup.addEventListener("contextmenu", lostBoxContextHandler);
+  }
+
   // -------------------------------
   // SVG WRAPPER & TRASH
   // -------------------------------
@@ -902,6 +920,14 @@
   const canvasSVG = document.getElementById("canvasSVG");
   const trashCan = document.getElementById("trashCan");
   const trashImg = trashCan.querySelector("img");
+
+  trashCan.addEventListener("contextmenu", (e) => {
+    e.preventDefault();
+    hideContextType = "trash";
+    hideContextMenu.style.display = "block";
+    hideContextMenu.style.left = e.clientX + "px";
+    hideContextMenu.style.top = e.clientY + "px";
+  });
 
   // -------------------------------
   // Zones Table
@@ -3284,6 +3310,7 @@
 
   document.addEventListener("click", () => {
     layerContextMenu.style.display = "none";
+    hideContextMenu.style.display = "none";
   });
 
   layerContextMenu.addEventListener("click", (e) => {
@@ -3362,6 +3389,20 @@
     rebuildLayersList();
     rebuildZonesTable();
     updateCounters();
+  });
+
+  hideContextOption.addEventListener("click", () => {
+    hideContextMenu.style.display = "none";
+    if (hideContextType === "trash") {
+      hideTrashToggle.checked = true;
+      hideTrash = true;
+      toggleTrashCanVisibility(true);
+    } else if (hideContextType === "lost") {
+      hideLostBoxToggle.checked = true;
+      lostBoxHidden = true;
+      if (lostBoxGroup) lostBoxGroup.style.display = "none";
+    }
+    hideContextType = null;
   });
 
   function inferLabelLocation(label, orientation) {
