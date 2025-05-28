@@ -99,6 +99,7 @@
         updateCounters();
         ensureLostBoxOnTop();
         rebuildLayersList();
+        scheduleHighlightCleanup(clone);
         redoStack.push({
           type: "group-modify",
           elementId: action.elementId,
@@ -152,6 +153,7 @@
         updateCounters();
         ensureLostBoxOnTop();
         rebuildLayersList();
+        scheduleHighlightCleanup(clone);
         undoStack.push({
           type: "group-modify",
           elementId: action.elementId,
@@ -3184,6 +3186,15 @@
     });
     ensureLostBoxOnTop();
     rebuildLayersList();
+  }
+
+  function scheduleHighlightCleanup(group) {
+    const adds = group.querySelectorAll(".highlight-add");
+    adds.forEach((el) =>
+      setTimeout(() => el.classList.remove("highlight-add"), 2000),
+    );
+    const removes = group.querySelectorAll(".highlight-remove");
+    removes.forEach((el) => setTimeout(() => el.remove(), 2000));
   }
 
   function pushGroupChange(group, beforeClone) {
