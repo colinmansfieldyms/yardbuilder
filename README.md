@@ -1,11 +1,11 @@
-# 📘 YardBuilder ReadMe  
-**Website:** [YardBuilder](https://colinmansfieldyms.github.io/yardbuilder/)
+# 📘 Eagle View Builder ReadMe  
+**Website:** [Eagle View Builder](https://colinmansfieldyms.github.io/yardbuilder/)
 
 ---
 
 ## 🧭 Overview
 
-**YardBuilder** is a lightweight, browser-based configuration tool developed for internal use at **Yard Management Solutions**. It enables team members to visually build, edit, and export yard layout configurations—specifically for use with our Eagle View map system. The purpose of this tool is to streamline the early stages of yard design and accelerate implementation timelines for both demos and live customer setups.
+**Eagle View Builder** is a lightweight, browser-based configuration tool developed for internal use at **Yard Management Solutions**. It enables team members to visually build, edit, and export yard layout configurations—specifically for use with our Eagle View map system. The purpose of this tool is to streamline the early stages of yard design and accelerate implementation timelines for both demos and live customer setups.
 
 This site is not intended for public use and should be considered an **internal utility** for Sales, Engineering, and Project Management teams.
 
@@ -34,7 +34,7 @@ This site is not intended for public use and should be considered an **internal 
 
 ## 📌 Why It Matters
 
-YardBuilder accelerates **pre-sales** and **onboarding workflows** by giving teams a powerful, no-code tool for building yard layouts in minutes. It:
+Eagle View Builder accelerates **pre-sales** and **onboarding workflows** by giving teams a powerful, no-code tool for building yard layouts in minutes. It:
 
 - Reduces reliance on Engineering to manually configure layouts from scratch.
 - Enables Sales and PMs to gather more accurate yard data during customer interactions.
