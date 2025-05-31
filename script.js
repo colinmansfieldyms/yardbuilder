@@ -930,7 +930,7 @@
   });
 
   trashCan.addEventListener("click", () => {
-    alert("Drag an item to the trash can to delete it");
+    showTrashInstruction();
   });
 
   // -------------------------------
@@ -1537,6 +1537,20 @@
       onYes();
     });
     overlay.querySelector("#confirmNo").addEventListener("click", () => {
+      document.body.removeChild(overlay);
+    });
+  }
+
+  function showTrashInstruction() {
+    const overlay = document.createElement("div");
+    overlay.className = "confirm-overlay";
+    const box = document.createElement("div");
+    box.className = "confirm-box";
+    box.innerHTML =
+      '<p>Drag an item to the trash can to delete it</p><div class="confirm-buttons"><button id="trashOk">OK</button></div>';
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+    overlay.querySelector("#trashOk").addEventListener("click", () => {
       document.body.removeChild(overlay);
     });
   }
