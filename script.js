@@ -921,6 +921,31 @@
   const trashCan = document.getElementById("trashCan");
   const trashImg = trashCan.querySelector("img");
 
+  // Selection state
+  const selectedElements = new Set();
+  let isSelecting = false;
+  let marqueeEl = null;
+  let selectStartX = 0;
+  let selectStartY = 0;
+  const dragStartMap = new Map();
+
+  function clearSelection() {
+    selectedElements.forEach((el) => el.classList.remove("selected"));
+    selectedElements.clear();
+  }
+
+  function addToSelection(el) {
+    if (!selectedElements.has(el)) {
+      selectedElements.add(el);
+      el.classList.add("selected");
+    }
+  }
+
+  function setSelection(list) {
+    clearSelection();
+    list.forEach((el) => addToSelection(el));
+  }
+
   trashCan.addEventListener("contextmenu", (e) => {
     e.preventDefault();
     hideContextType = "trash";
@@ -1225,7 +1250,21 @@
   canvasSVG.addEventListener("mousedown", (e) => {
     const target = e.target;
     const group = target.closest('g[data-type="draggable"]');
-    if (!group) return;
+
+    if (!group) {
+      // Start marquee selection
+      clearSelection();
+      isSelecting = true;
+      selectStartX = e.clientX;
+      selectStartY = e.clientY;
+      marqueeEl = document.createElement("div");
+      marqueeEl.className = "marquee";
+      marqueeEl.style.left = selectStartX + "px";
+      marqueeEl.style.top = selectStartY + "px";
+      document.body.appendChild(marqueeEl);
+      e.preventDefault();
+      return;
+    }
 
     const [oldX, oldY] = getTranslation(group);
     const oldW = parseFloat(group.getAttribute("data-w")) || 0;
@@ -1233,6 +1272,9 @@
 
     if (target.hasAttribute("data-resize")) {
       // Resize
+      if (!selectedElements.has(group)) {
+        setSelection([group]);
+      }
       isResizing = true;
       currentElement = group;
       startWidth = oldW;
@@ -1251,23 +1293,38 @@
     }
 
     // Otherwise, drag
+    if (!selectedElements.has(group)) {
+      setSelection([group]);
+    }
+
     isResizing = false;
     currentElement = group;
 
-    const [curX, curY] = [oldX, oldY];
-    offsetX = e.clientX - curX * currentScale;
-    offsetY = e.clientY - curY * currentScale;
+    selectedElements.forEach((el) => {
+      const [sx, sy] = getTranslation(el);
+      dragStartMap.set(el, { startX: sx, startY: sy });
+      el.__undoData = { type: "move", oldX: sx, oldY: sy };
+    });
 
-    group.__undoData = {
-      type: "move",
-      oldX: oldX,
-      oldY: oldY,
-    };
+    offsetX = e.clientX - oldX * currentScale;
+    offsetY = e.clientY - oldY * currentScale;
 
     e.preventDefault();
   });
 
   document.addEventListener("mousemove", (e) => {
+    if (isSelecting) {
+      const x1 = Math.min(selectStartX, e.clientX);
+      const y1 = Math.min(selectStartY, e.clientY);
+      const x2 = Math.max(selectStartX, e.clientX);
+      const y2 = Math.max(selectStartY, e.clientY);
+      marqueeEl.style.left = x1 + "px";
+      marqueeEl.style.top = y1 + "px";
+      marqueeEl.style.width = x2 - x1 + "px";
+      marqueeEl.style.height = y2 - y1 + "px";
+      return;
+    }
+
     if (!currentElement) return;
     e.preventDefault();
 
@@ -1322,59 +1379,91 @@
         [x, y] = magnetizePosition(currentElement, x, y);
       }
 
-      currentElement.setAttribute("transform", `translate(${x},${y})`);
+      const start = dragStartMap.get(currentElement);
+      const dx = x - start.startX;
+      const dy = y - start.startY;
+      selectedElements.forEach((el) => {
+        const info = dragStartMap.get(el);
+        if (!info) return;
+        let nx = info.startX + dx;
+        let ny = info.startY + dy;
+        el.setAttribute("transform", `translate(${nx},${ny})`);
+      });
       checkTrashHover(currentElement);
     }
   });
 
-  document.addEventListener("mouseup", () => {
+  document.addEventListener("mouseup", (e) => {
+    if (isSelecting) {
+      if (marqueeEl && marqueeEl.parentNode) {
+        marqueeEl.parentNode.removeChild(marqueeEl);
+      }
+      const rect = {
+        left: Math.min(selectStartX, e.clientX),
+        top: Math.min(selectStartY, e.clientY),
+        right: Math.max(selectStartX, e.clientX),
+        bottom: Math.max(selectStartY, e.clientY),
+      };
+      const elements = [];
+      if (
+        Math.abs(rect.right - rect.left) > 3 &&
+        Math.abs(rect.bottom - rect.top) > 3
+      ) {
+        canvasSVG.querySelectorAll('g[data-type="draggable"]').forEach((el) => {
+          const box = getGlobalBox(el);
+          if (rectOverlap(box, rect)) {
+            elements.push(el);
+          }
+        });
+      }
+      setSelection(elements);
+      isSelecting = false;
+      return;
+    }
+
     if (!currentElement) {
       return;
     }
     if (!isResizing) {
-      finalizeTrashCheck(currentElement);
+      selectedElements.forEach((el) => finalizeTrashCheck(el));
     }
 
-    // Check if the element is still in the DOM
-    const stillInDOM = canvasSVG.contains(currentElement);
+    selectedElements.forEach((el) => {
+      const stillInDOM = canvasSVG.contains(el);
+      if (!stillInDOM) return;
 
-    if (stillInDOM) {
-      const [newX, newY] = getTranslation(currentElement);
-      const newW = parseFloat(currentElement.getAttribute("data-w")) || 0;
-      const newH = parseFloat(currentElement.getAttribute("data-h")) || 0;
+      const [newX, newY] = getTranslation(el);
+      const newW = parseFloat(el.getAttribute("data-w")) || 0;
+      const newH = parseFloat(el.getAttribute("data-h")) || 0;
 
-      const undoData = currentElement.__undoData;
+      const undoData = el.__undoData;
       if (undoData) {
-        // Determine the type of action (move or resize)
         if (undoData.type === "move") {
-          // Push a 'move' action to the undo stack
           pushUndoAction({
             type: "move",
-            element: currentElement,
+            element: el,
             oldX: undoData.oldX,
             oldY: undoData.oldY,
             newX: newX,
             newY: newY,
           });
-        } else if (undoData.type === "resize") {
-          // Push a 'resize' action to the undo stack
+        } else if (undoData.type === "resize" && el === currentElement) {
           pushUndoAction({
             type: "resize",
-            element: currentElement,
+            element: el,
             oldWidth: undoData.oldW,
             oldHeight: undoData.oldH,
             newWidth: newW,
             newHeight: newH,
           });
         }
-        // Clean up: Remove the temporary undo data
-        delete currentElement.__undoData;
+        delete el.__undoData;
       }
-    }
-    // If the element was deleted (not in DOM), do not push the 'move' action
+    });
 
     currentElement = null;
     isResizing = false;
+    dragStartMap.clear();
   });
 
   function getTranslation(g) {
@@ -1465,6 +1554,7 @@
 
       // -- 3) Remove the group from the DOM
       group.remove();
+      selectedElements.delete(group);
 
       // -- 4) Rebuild the Zones List so the row is removed or updated:
       rebuildZonesTable();
@@ -1500,6 +1590,7 @@
     });
 
     group.remove();
+    selectedElements.delete(group);
     rebuildZonesTable();
     updateCounters();
   }

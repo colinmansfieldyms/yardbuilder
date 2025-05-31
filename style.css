@@ -847,3 +847,19 @@ input:checked + .slider:before {
 .confirm-buttons button {
   cursor: pointer;
 }
+
+/* Marquee selection */
+.marquee {
+  position: absolute;
+  border: 1px dashed #39f;
+  background: rgba(0, 128, 255, 0.1);
+  pointer-events: none;
+  z-index: 10000;
+}
+
+/* Highlight selected elements */
+g.selected rect[data-role="hitbox"] {
+  stroke: #ff9800;
+  stroke-width: 2;
+  fill: rgba(255, 152, 0, 0.2);
+}
