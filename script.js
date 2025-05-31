@@ -929,6 +929,10 @@
     hideContextMenu.style.top = e.clientY + "px";
   });
 
+  trashCan.addEventListener("click", () => {
+    alert("Drag an item to the trash can to delete it");
+  });
+
   // -------------------------------
   // Zones Table
   // -------------------------------
