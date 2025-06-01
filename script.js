@@ -921,6 +921,40 @@
   const trashCan = document.getElementById("trashCan");
   const trashImg = trashCan.querySelector("img");
 
+  // Rotate button (SVG group appended to selected element)
+  const rotateBtn = document.createElementNS("http://www.w3.org/2000/svg", "g");
+  rotateBtn.setAttribute("id", "rotateBtn");
+  rotateBtn.setAttribute("data-export-ignore", "true");
+  rotateBtn.style.display = "none";
+  rotateBtn.style.cursor = "pointer";
+  const rotateBg = document.createElementNS(
+    "http://www.w3.org/2000/svg",
+    "circle",
+  );
+  rotateBg.setAttribute("cx", "0");
+  rotateBg.setAttribute("cy", "0");
+  rotateBg.setAttribute("r", "8");
+  rotateBg.setAttribute("fill", "rgba(0,0,0,0.6)");
+  rotateBg.setAttribute("stroke", "#fff");
+  rotateBg.setAttribute("stroke-width", "1");
+  const rotatePath = document.createElementNS(
+    "http://www.w3.org/2000/svg",
+    "path",
+  );
+  rotatePath.setAttribute("d", "M-3,-2 L3,-2 L3,4 M3,-2 A5 5 0 1 1 -3,4");
+  rotatePath.setAttribute("fill", "none");
+  rotatePath.setAttribute("stroke", "#fff");
+  rotatePath.setAttribute("stroke-width", "1.5");
+  rotateBtn.appendChild(rotateBg);
+  rotateBtn.appendChild(rotatePath);
+
+  rotateBtn.addEventListener("click", () => {
+    if (selectedElements.size !== 1) return;
+    const el = Array.from(selectedElements)[0];
+    rotateGroup(el);
+    updateRotateButton();
+  });
+
   // Selection state
   const selectedElements = new Set();
   let isSelecting = false;
@@ -952,6 +986,8 @@
       const tr = zonesTableBody.querySelector(`tr[data-zone-id="${id}"]`);
       if (tr) tr.classList.add("selected");
     });
+
+    updateRotateButton();
   }
 
   function clearSelection() {
@@ -975,6 +1011,19 @@
       el.classList.add("selected");
     });
     updateSelectionIndicators();
+  }
+
+  function updateRotateButton() {
+    rotateBtn.style.display = "none";
+    if (rotateBtn.parentNode) rotateBtn.parentNode.removeChild(rotateBtn);
+    if (selectedElements.size !== 1) return;
+    const el = Array.from(selectedElements)[0];
+    const bbox = el.getBBox();
+    const x = bbox.x + bbox.width + 4;
+    const y = bbox.y - 4;
+    rotateBtn.setAttribute("transform", `translate(${x},${y})`);
+    el.appendChild(rotateBtn);
+    rotateBtn.style.display = "block";
   }
 
   trashCan.addEventListener("contextmenu", (e) => {
@@ -1283,6 +1332,9 @@
     const group = target.closest('g[data-type="draggable"]');
     const additive = e.shiftKey || e.metaKey;
 
+    rotateBtn.style.display = "none";
+    if (rotateBtn.parentNode) rotateBtn.parentNode.removeChild(rotateBtn);
+
     if (!group) {
       // Start marquee selection
       if (!additive) {
@@ -1531,6 +1583,7 @@
     currentElement = null;
     isResizing = false;
     dragStartMap.clear();
+    updateRotateButton();
   });
 
   function getTranslation(g) {
@@ -4080,6 +4133,111 @@
     labels.forEach((lbl, idx) => {
       lbl.textContent = prefix + (start + idx) + suffix;
     });
+    pushGroupChange(group, before);
+  }
+
+  function rotateGroup(group) {
+    const before = group.cloneNode(true);
+
+    const spots = group.querySelectorAll("g.eagleViewDropSpot");
+    if (!spots.length) {
+      const w = parseFloat(group.getAttribute("data-w")) || 0;
+      const h = parseFloat(group.getAttribute("data-h")) || 0;
+      updateElementSize(group, h, w);
+      group.setAttribute("data-w", h);
+      group.setAttribute("data-h", w);
+      pushGroupChange(group, before);
+      return;
+    }
+
+    const firstRect = spots[0].querySelector("rect");
+    const spotW = parseFloat(firstRect.getAttribute("width"));
+    const spotH = parseFloat(firstRect.getAttribute("height"));
+    let orientation = group.getAttribute("data-orientation");
+    if (!orientation) orientation = spotW > spotH ? "vertical" : "horizontal";
+    const newOrientation =
+      orientation === "vertical" ? "horizontal" : "vertical";
+    group.setAttribute("data-orientation", newOrientation);
+
+    const labels = group.querySelectorAll(".spot-label");
+    const lines = Array.from(group.querySelectorAll("line"));
+    lines.forEach((ln) => ln.remove());
+
+    const newSpotW = spotH;
+    const newSpotH = spotW;
+
+    spots.forEach((sp, idx) => {
+      const r = sp.querySelector("rect");
+      const x = newOrientation === "vertical" ? idx * newSpotW : 0;
+      const y = newOrientation === "horizontal" ? idx * newSpotH : 0;
+      r.setAttribute("x", x);
+      r.setAttribute("y", y);
+      r.setAttribute("width", newSpotW);
+      r.setAttribute("height", newSpotH);
+
+      const load = sp.querySelector(".loading_triangle");
+      const unload = sp.querySelector(".unloading_triangle");
+      if (load) load.remove();
+      if (unload) unload.remove();
+
+      const lbl = labels[idx];
+      const lblLoc = lbl ? inferLabelLocation(lbl, orientation) : "bottom";
+      if (load || unload) {
+        addDockTriangles(
+          sp,
+          sp.getAttribute("data-spot-id"),
+          x,
+          y,
+          newSpotW,
+          newSpotH,
+          lblLoc,
+          newOrientation,
+        );
+      }
+
+      if (lbl) {
+        const rotationMode = lbl.getAttribute("transform") ? "90" : "dynamic";
+        positionLabel(
+          lbl,
+          newOrientation,
+          lblLoc,
+          newSpotW,
+          newSpotH,
+          newOrientation === "vertical" ? x : 0,
+          newOrientation === "horizontal" ? y : 0,
+          lbl.textContent,
+          rotationMode,
+        );
+      }
+    });
+
+    for (let i = 0; i <= spots.length; i++) {
+      const line = document.createElementNS(
+        "http://www.w3.org/2000/svg",
+        "line",
+      );
+      if (newOrientation === "vertical") {
+        const pos = i * newSpotW;
+        line.setAttribute("x1", pos);
+        line.setAttribute("y1", 0);
+        line.setAttribute("x2", pos);
+        line.setAttribute("y2", newSpotH);
+      } else {
+        const pos = i * newSpotH;
+        line.setAttribute("x1", 0);
+        line.setAttribute("y1", pos);
+        line.setAttribute("x2", newSpotW);
+        line.setAttribute("y2", pos);
+      }
+      line.setAttribute("stroke", "#fff");
+      line.setAttribute("stroke-width", "1.2");
+      line.setAttribute("pointer-events", "none");
+      group.appendChild(line);
+    }
+
+    adjustGroupSize(group);
+    updateCounters();
+    rebuildLayersList();
     pushGroupChange(group, before);
   }
 
