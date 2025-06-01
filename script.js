@@ -929,21 +929,52 @@
   let selectStartY = 0;
   const dragStartMap = new Map();
 
+  function updateSelectionIndicators() {
+    layersList
+      .querySelectorAll("li.selected")
+      .forEach((li) => li.classList.remove("selected"));
+    zonesTableBody
+      .querySelectorAll("tr.selected")
+      .forEach((tr) => tr.classList.remove("selected"));
+
+    const zoneIds = new Set();
+    selectedElements.forEach((el) => {
+      const lid = el.getAttribute("data-layer-id");
+      if (lid) {
+        const li = layersList.querySelector(`li[data-target-id="${lid}"]`);
+        if (li) li.classList.add("selected");
+      }
+      const zid = el.getAttribute("data-zone-id");
+      if (zid) zoneIds.add(zid);
+    });
+
+    zoneIds.forEach((id) => {
+      const tr = zonesTableBody.querySelector(`tr[data-zone-id="${id}"]`);
+      if (tr) tr.classList.add("selected");
+    });
+  }
+
   function clearSelection() {
     selectedElements.forEach((el) => el.classList.remove("selected"));
     selectedElements.clear();
+    updateSelectionIndicators();
   }
 
   function addToSelection(el) {
     if (!selectedElements.has(el)) {
       selectedElements.add(el);
       el.classList.add("selected");
+      updateSelectionIndicators();
     }
   }
 
   function setSelection(list) {
     clearSelection();
-    list.forEach((el) => addToSelection(el));
+    list.forEach((el) => {
+      selectedElements.add(el);
+      el.classList.add("selected");
+    });
+    updateSelectionIndicators();
   }
 
   trashCan.addEventListener("contextmenu", (e) => {
@@ -1300,6 +1331,7 @@
       if (selectedElements.has(group)) {
         selectedElements.delete(group);
         group.classList.remove("selected");
+        updateSelectionIndicators();
       } else {
         addToSelection(group);
       }
@@ -1590,6 +1622,7 @@
       // -- 3) Remove the group from the DOM
       group.remove();
       selectedElements.delete(group);
+      updateSelectionIndicators();
 
       // -- 4) Rebuild the Zones List so the row is removed or updated:
       rebuildZonesTable();
@@ -1626,6 +1659,7 @@
 
     group.remove();
     selectedElements.delete(group);
+    updateSelectionIndicators();
     rebuildZonesTable();
     updateCounters();
   }
@@ -3208,6 +3242,7 @@
     if (zoneGroups.length > 0 && smallestZoneId !== Infinity) {
       startingZoneNumberInput.value = smallestZoneId;
     }
+    updateSelectionIndicators();
   }
 
   // ------ Layers Management ------
@@ -3303,6 +3338,7 @@
       );
       layersList.appendChild(li);
     });
+    updateSelectionIndicators();
   }
 
   let draggedItem = null;

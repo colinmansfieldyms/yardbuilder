@@ -615,6 +615,10 @@ input:checked + .slider:before {
 #layersList li:hover .drag-handle {
   visibility: visible;
 }
+#layersList li.selected,
+.zones-table-content tr.selected {
+  background-color: #4a6fa5;
+}
 #layersList li .layer-name {
   flex: 1;
   overflow: hidden;
