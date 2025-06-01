@@ -941,11 +941,13 @@
     "http://www.w3.org/2000/svg",
     "path",
   );
-  rotatePath.setAttribute("d", "M-3,-2 L3,-2 L3,4 M3,-2 A5 5 0 1 1 -3,4");
+  rotatePath.setAttribute("d", "M-3,-3 L3,-3 L3,3 M3,-3 A5 5 0 1 1 -3,3");
   rotatePath.setAttribute("fill", "none");
   rotatePath.setAttribute("stroke", "#fff");
   rotatePath.setAttribute("stroke-width", "2");
   rotatePath.setAttribute("transform", "scale(1.2)");
+  rotatePath.setAttribute("stroke-linecap", "round");
+  rotatePath.setAttribute("stroke-linejoin", "round");
   rotateBtn.appendChild(rotateBg);
   rotateBtn.appendChild(rotatePath);
 
@@ -1020,10 +1022,17 @@
     if (selectedElements.size !== 1) return;
     const el = Array.from(selectedElements)[0];
     const bbox = el.getBBox();
-    const x = bbox.x + bbox.width + 4;
-    const y = bbox.y - 4;
-    rotateBtn.setAttribute("transform", `translate(${x},${y})`);
-    el.appendChild(rotateBtn);
+    const matrix = el.getCTM();
+    if (!matrix) return;
+    const pt = canvasSVG.createSVGPoint();
+    pt.x = bbox.x + bbox.width;
+    pt.y = bbox.y;
+    const global = pt.matrixTransform(matrix);
+    rotateBtn.setAttribute(
+      "transform",
+      `translate(${global.x + 4}, ${global.y - 4})`,
+    );
+    canvasSVG.appendChild(rotateBtn);
     rotateBtn.style.display = "block";
   }
 
