@@ -921,40 +921,10 @@
   const trashCan = document.getElementById("trashCan");
   const trashImg = trashCan.querySelector("img");
 
-  // Rotate button (SVG group appended to selected element)
-  const rotateBtn = document.createElementNS("http://www.w3.org/2000/svg", "g");
-  rotateBtn.setAttribute("id", "rotateBtn");
+  // Rotate button (HTML button overlay)
+  const rotateBtn = document.getElementById("rotateBtn");
   rotateBtn.setAttribute("data-export-ignore", "true");
   rotateBtn.style.display = "none";
-  rotateBtn.style.cursor = "pointer";
-  const rotateBg = document.createElementNS(
-    "http://www.w3.org/2000/svg",
-    "circle",
-  );
-  rotateBg.setAttribute("cx", "0");
-  rotateBg.setAttribute("cy", "0");
-  rotateBg.setAttribute("r", "8");
-  rotateBg.setAttribute("fill", "#2b476d");
-  rotateBg.setAttribute("stroke", "#fff");
-  rotateBg.setAttribute("stroke-width", "1");
-  const rotatePath = document.createElementNS(
-    "http://www.w3.org/2000/svg",
-    "path",
-  );
-  rotatePath.setAttribute("d", "M-3,-3 L3,-3 L3,3 M3,-3 A5 5 0 1 1 -3,3");
-  rotatePath.setAttribute("fill", "none");
-  rotatePath.setAttribute("stroke", "#fff");
-  rotatePath.setAttribute("stroke-width", "2");
-  rotatePath.setAttribute("stroke-linecap", "round");
-  rotatePath.setAttribute("stroke-linejoin", "round");
-  const rotateArrowGroup = document.createElementNS(
-    "http://www.w3.org/2000/svg",
-    "g",
-  );
-  rotateArrowGroup.setAttribute("transform", "scale(1.2)");
-  rotateArrowGroup.appendChild(rotatePath);
-  rotateBtn.appendChild(rotateBg);
-  rotateBtn.appendChild(rotateArrowGroup);
 
   rotateBtn.addEventListener("click", () => {
     if (selectedElements.size !== 1) return;
@@ -1023,7 +993,6 @@
 
   function updateRotateButton() {
     rotateBtn.style.display = "none";
-    if (rotateBtn.parentNode) rotateBtn.parentNode.removeChild(rotateBtn);
     if (selectedElements.size !== 1) return;
     const el = Array.from(selectedElements)[0];
     const bbox = el.getBBox();
@@ -1033,11 +1002,10 @@
     pt.x = bbox.x + bbox.width;
     pt.y = bbox.y;
     const global = pt.matrixTransform(matrix);
-    rotateBtn.setAttribute(
-      "transform",
-      `translate(${global.x + 4}, ${global.y - 4})`,
-    );
-    canvasSVG.appendChild(rotateBtn);
+    const wrapperRect = svgWrapper.getBoundingClientRect();
+    rotateBtn.style.left = `${wrapperRect.left + global.x + 4}px`;
+    rotateBtn.style.top = `${wrapperRect.top + global.y - 4}px`;
+    rotateBtn.style.transform = "translate(-50%, -50%)";
     rotateBtn.style.display = "block";
   }
 
@@ -1354,7 +1322,6 @@
     const additive = e.shiftKey || e.metaKey;
 
     rotateBtn.style.display = "none";
-    if (rotateBtn.parentNode) rotateBtn.parentNode.removeChild(rotateBtn);
 
     if (!group) {
       // Start marquee selection
