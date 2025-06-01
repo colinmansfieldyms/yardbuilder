@@ -945,11 +945,16 @@
   rotatePath.setAttribute("fill", "none");
   rotatePath.setAttribute("stroke", "#fff");
   rotatePath.setAttribute("stroke-width", "2");
-  rotatePath.setAttribute("transform", "scale(1.2)");
   rotatePath.setAttribute("stroke-linecap", "round");
   rotatePath.setAttribute("stroke-linejoin", "round");
+  const rotateArrowGroup = document.createElementNS(
+    "http://www.w3.org/2000/svg",
+    "g",
+  );
+  rotateArrowGroup.setAttribute("transform", "scale(1.2)");
+  rotateArrowGroup.appendChild(rotatePath);
   rotateBtn.appendChild(rotateBg);
-  rotateBtn.appendChild(rotatePath);
+  rotateBtn.appendChild(rotateArrowGroup);
 
   rotateBtn.addEventListener("click", () => {
     if (selectedElements.size !== 1) return;
