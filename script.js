@@ -934,7 +934,7 @@
   rotateBg.setAttribute("cx", "0");
   rotateBg.setAttribute("cy", "0");
   rotateBg.setAttribute("r", "8");
-  rotateBg.setAttribute("fill", "rgba(0,0,0,0.6)");
+  rotateBg.setAttribute("fill", "#2b476d");
   rotateBg.setAttribute("stroke", "#fff");
   rotateBg.setAttribute("stroke-width", "1");
   const rotatePath = document.createElementNS(
@@ -944,7 +944,8 @@
   rotatePath.setAttribute("d", "M-3,-2 L3,-2 L3,4 M3,-2 A5 5 0 1 1 -3,4");
   rotatePath.setAttribute("fill", "none");
   rotatePath.setAttribute("stroke", "#fff");
-  rotatePath.setAttribute("stroke-width", "1.5");
+  rotatePath.setAttribute("stroke-width", "2");
+  rotatePath.setAttribute("transform", "scale(1.2)");
   rotateBtn.appendChild(rotateBg);
   rotateBtn.appendChild(rotatePath);
 
