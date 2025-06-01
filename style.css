@@ -870,12 +870,16 @@ g.selected rect[data-role="hitbox"] {
 
 /* Rotate button */
 #rotateBtn circle {
-  fill: rgba(0, 0, 0, 0.6);
+  fill: #2b476d;
   stroke: #fff;
   stroke-width: 1;
 }
 #rotateBtn path {
   stroke: #fff;
-  stroke-width: 1.5;
+  stroke-width: 2;
   fill: none;
+  transform-origin: center;
+}
+#rotateBtn:hover circle {
+  fill: #3b5a8d;
 }
