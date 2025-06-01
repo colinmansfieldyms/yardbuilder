@@ -867,3 +867,15 @@ g.selected rect[data-role="hitbox"] {
   stroke-width: 2;
   fill: rgba(255, 152, 0, 0.2);
 }
+
+/* Rotate button */
+#rotateBtn circle {
+  fill: rgba(0, 0, 0, 0.6);
+  stroke: #fff;
+  stroke-width: 1;
+}
+#rotateBtn path {
+  stroke: #fff;
+  stroke-width: 1.5;
+  fill: none;
+}
