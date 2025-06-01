@@ -871,44 +871,39 @@ g.selected rect[data-role="hitbox"] {
 /* Rotate button */
 #rotateBtn {
   position: absolute;
-  background: transparent;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: rgba(255, 255, 255, 0);
   border: none;
-  padding: 4px;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
+  outline: none;
+  opacity: 0;
+  transform: scale(0.8);
   transition:
-    background-color 0.2s,
-    transform 0.2s;
+    opacity 0.15s ease,
+    background 0.15s ease,
+    transform 0.15s ease;
+  pointer-events: none;
+  color: rgba(255, 255, 255, 0.9);
 }
-#rotateBtn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-#rotateBtn circle {
-  fill: #14335d;
-  stroke: #fff;
-  stroke-width: 1;
-}
-#rotateBtn:hover circle,
-#rotateBtn:focus circle {
-  fill: #1b4c88;
-}
-
-#rotateBtn path {
-  stroke: #fff;
-  stroke-width: 2.5;
+#rotateBtn svg path {
+  stroke: currentColor;
+  stroke-width: 2;
   fill: none;
-  transform-origin: center;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
-
-#rotateBtn:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-  transform: scale(1.05);
+#rotateBtn.show {
+  opacity: 1;
+  transform: scale(1);
+  pointer-events: auto;
 }
+#rotateBtn:hover,
 #rotateBtn:focus {
-  outline: 2px solid rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+#rotateBtn:active {
+  background: rgba(255, 255, 255, 0.3);
 }

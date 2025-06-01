@@ -924,13 +924,13 @@
   // Rotate button (HTML button overlay)
   const rotateBtn = document.getElementById("rotateBtn");
   rotateBtn.setAttribute("data-export-ignore", "true");
-  rotateBtn.style.display = "none";
 
   rotateBtn.addEventListener("click", () => {
     if (selectedElements.size !== 1) return;
     const el = Array.from(selectedElements)[0];
     rotateGroup(el);
     updateRotateButton();
+    rotateBtn.blur();
   });
 
   // Selection state
@@ -992,20 +992,19 @@
   }
 
   function updateRotateButton() {
-    rotateBtn.style.display = "none";
+    rotateBtn.classList.remove("show");
     if (selectedElements.size !== 1) return;
     const el = Array.from(selectedElements)[0];
     const bbox = el.getBBox();
     const matrix = el.getCTM();
     if (!matrix) return;
     const pt = canvasSVG.createSVGPoint();
-    pt.x = bbox.x + bbox.width;
-    pt.y = bbox.y;
+    pt.x = bbox.x + bbox.width + 4;
+    pt.y = bbox.y - 4;
     const global = pt.matrixTransform(matrix);
-    rotateBtn.style.left = `${global.x + 4}px`;
-    rotateBtn.style.top = `${global.y - 4}px`;
-    rotateBtn.style.transform = "translate(-50%, -50%)";
-    rotateBtn.style.display = "block";
+    rotateBtn.style.left = `${global.x}px`;
+    rotateBtn.style.top = `${global.y}px`;
+    rotateBtn.classList.add("show");
   }
 
   trashCan.addEventListener("contextmenu", (e) => {
@@ -1320,7 +1319,7 @@
     const group = target.closest('g[data-type="draggable"]');
     const additive = e.shiftKey || e.metaKey;
 
-    rotateBtn.style.display = "none";
+    rotateBtn.classList.remove("show");
 
     if (!group) {
       // Start marquee selection
