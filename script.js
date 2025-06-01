@@ -1002,9 +1002,8 @@
     pt.x = bbox.x + bbox.width;
     pt.y = bbox.y;
     const global = pt.matrixTransform(matrix);
-    const wrapperRect = svgWrapper.getBoundingClientRect();
-    rotateBtn.style.left = `${wrapperRect.left + global.x + 4}px`;
-    rotateBtn.style.top = `${wrapperRect.top + global.y - 4}px`;
+    rotateBtn.style.left = `${global.x + 4}px`;
+    rotateBtn.style.top = `${global.y - 4}px`;
     rotateBtn.style.transform = "translate(-50%, -50%)";
     rotateBtn.style.display = "block";
   }
