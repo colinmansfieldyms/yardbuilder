@@ -869,17 +869,46 @@ g.selected rect[data-role="hitbox"] {
 }
 
 /* Rotate button */
+#rotateBtn {
+  position: absolute;
+  background: transparent;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition:
+    background-color 0.2s,
+    transform 0.2s;
+}
+#rotateBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 #rotateBtn circle {
-  fill: #2b476d;
+  fill: #14335d;
   stroke: #fff;
   stroke-width: 1;
 }
+#rotateBtn:hover circle,
+#rotateBtn:focus circle {
+  fill: #1b4c88;
+}
+
 #rotateBtn path {
   stroke: #fff;
-  stroke-width: 2;
+  stroke-width: 2.5;
   fill: none;
   transform-origin: center;
 }
-#rotateBtn:hover circle {
-  fill: #3b5a8d;
+
+#rotateBtn:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  transform: scale(1.05);
+}
+#rotateBtn:focus {
+  outline: 2px solid rgba(255, 255, 255, 0.6);
 }
