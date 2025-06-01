@@ -1250,10 +1250,13 @@
   canvasSVG.addEventListener("mousedown", (e) => {
     const target = e.target;
     const group = target.closest('g[data-type="draggable"]');
+    const additive = e.shiftKey || e.metaKey;
 
     if (!group) {
       // Start marquee selection
-      clearSelection();
+      if (!additive) {
+        clearSelection();
+      }
       isSelecting = true;
       selectStartX = e.clientX;
       selectStartY = e.clientY;
@@ -1292,7 +1295,18 @@
       return;
     }
 
-    // Otherwise, drag
+    // Otherwise, drag or additive selection
+    if (additive) {
+      if (selectedElements.has(group)) {
+        selectedElements.delete(group);
+        group.classList.remove("selected");
+      } else {
+        addToSelection(group);
+      }
+      e.preventDefault();
+      return;
+    }
+
     if (!selectedElements.has(group)) {
       setSelection([group]);
     }
@@ -1425,7 +1439,28 @@
       return;
     }
     if (!isResizing) {
-      selectedElements.forEach((el) => finalizeTrashCheck(el));
+      const trashOpen = trashImg.src.indexOf("jxXQYYR.png") !== -1;
+      let deleteAll = false;
+      if (trashOpen) {
+        const currRect = getGlobalBox(currentElement);
+        const trashRect = trashCan.getBoundingClientRect();
+        if (rectOverlap(currRect, trashRect)) {
+          deleteAll = true;
+        }
+      }
+
+      const allSelected = Array.from(selectedElements);
+      if (deleteAll && allSelected.length > 1) {
+        allSelected.forEach((el) => {
+          if (el === currentElement) {
+            finalizeTrashCheck(el);
+          } else {
+            deleteGroupDirect(el);
+          }
+        });
+      } else {
+        allSelected.forEach((el) => finalizeTrashCheck(el));
+      }
     }
 
     selectedElements.forEach((el) => {
@@ -3440,9 +3475,12 @@
       parent.insertBefore(contextTarget, parent.firstChild);
     } else if (action === "delete") {
       layerContextMenu.style.display = "none";
-      const target = contextTarget;
+      const targets =
+        selectedElements.has(contextTarget) && selectedElements.size > 1
+          ? Array.from(selectedElements)
+          : [contextTarget];
       showDeleteConfirm(() => {
-        deleteGroupDirect(target);
+        targets.forEach((t) => deleteGroupDirect(t));
         contextTarget = null;
         ensureLostBoxOnTop();
         rebuildLayersList();
