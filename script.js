@@ -1328,6 +1328,12 @@
   let isResizing = false;
 
   canvasSVG.addEventListener("mousedown", (e) => {
+    if (e.target.closest("#rotateBtn")) {
+      e.stopPropagation();
+      e.preventDefault();
+      return;
+    }
+
     const target = e.target;
     const group = target.closest('g[data-type="draggable"]');
     const additive = e.shiftKey || e.metaKey;
