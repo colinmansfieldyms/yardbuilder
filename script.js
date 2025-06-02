@@ -75,10 +75,15 @@
         element.setAttribute("transform", `translate(${oldX},${oldY})`);
         element.setAttribute("data-type", "draggable");
         element.setAttribute("style", "cursor: move;");
+        // Remove any “selected” class on the clone, and clear from internal set
+        element.classList.remove("selected");
+        selectedElements.delete(element);
         rebuildZonesTable();
         updateCounters();
         ensureLostBoxOnTop();
         rebuildLayersList();
+        // Recalc/hide rotate button now that the clone is reinserted
+        updateRotateButton();
         redoStack.push({
           type: "delete",
           element,
@@ -117,6 +122,8 @@
     }
     updateUndoButtonState();
     updateRedoButtonState();
+    // Immediately reposition or hide the rotate button after undo
+    updateRotateButton();
   }
 
   function redoLastAction() {
@@ -171,6 +178,8 @@
     }
     updateUndoButtonState();
     updateRedoButtonState();
+    // Immediately reposition or hide the rotate button after redo
+    updateRotateButton();
   }
 
   // -------------------------------
@@ -1411,6 +1420,8 @@
 
     if (!currentElement) return;
     e.preventDefault();
+    // As soon as we start dragging, hide the rotate button
+    rotateBtn.classList.remove("show");
 
     if (isResizing) {
       const isLabel = !!currentElement.querySelector(
@@ -1701,6 +1712,8 @@
     updateSelectionIndicators();
     rebuildZonesTable();
     updateCounters();
+    // Force the Layers sidebar to update right away
+    rebuildLayersList();
   }
 
   function animateTrash() {
