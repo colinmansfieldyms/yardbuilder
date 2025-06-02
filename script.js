@@ -4125,8 +4125,10 @@
   function rotateGroup(group) {
     const before = group.cloneNode(true);
 
+    // Gather all spot sub-elements
     const spots = group.querySelectorAll("g.eagleViewDropSpot");
     if (!spots.length) {
+      // Fallback for non-spot groups: just swap width/height
       const w = parseFloat(group.getAttribute("data-w")) || 0;
       const h = parseFloat(group.getAttribute("data-h")) || 0;
       updateElementSize(group, h, w);
@@ -4136,23 +4138,31 @@
       return;
     }
 
+    // 1) Infer old orientation (from data-orientation or spot size)
     const firstRect = spots[0].querySelector("rect");
     const spotW = parseFloat(firstRect.getAttribute("width"));
     const spotH = parseFloat(firstRect.getAttribute("height"));
     let orientation = group.getAttribute("data-orientation");
-    if (!orientation) orientation = spotW > spotH ? "vertical" : "horizontal";
+    if (!orientation) {
+      orientation = spotW > spotH ? "vertical" : "horizontal";
+    }
+
+    // 2) Compute new orientation
     const newOrientation =
       orientation === "vertical" ? "horizontal" : "vertical";
     group.setAttribute("data-orientation", newOrientation);
 
-    const labels = group.querySelectorAll(".spot-label");
-    const lines = Array.from(group.querySelectorAll("line"));
-    lines.forEach((ln) => ln.remove());
+    // 3) Remove existing boundary lines
+    Array.from(group.querySelectorAll("line")).forEach((ln) => ln.remove());
 
+    // 4) Swap spot width/height
     const newSpotW = spotH;
     const newSpotH = spotW;
 
+    // 5) For each spot, reposition rect, triangles, and label
+    const labels = group.querySelectorAll(".spot-label");
     spots.forEach((sp, idx) => {
+      // a) Move the <rect> to its new (x, y)
       const r = sp.querySelector("rect");
       const x = newOrientation === "vertical" ? idx * newSpotW : 0;
       const y = newOrientation === "horizontal" ? idx * newSpotH : 0;
@@ -4161,14 +4171,34 @@
       r.setAttribute("width", newSpotW);
       r.setAttribute("height", newSpotH);
 
-      const load = sp.querySelector(".loading_triangle");
-      const unload = sp.querySelector(".unloading_triangle");
-      if (load) load.remove();
-      if (unload) unload.remove();
+      // b) Remove old triangles (if any)
+      const loadTri = sp.querySelector(".loading_triangle");
+      const unloadTri = sp.querySelector(".unloading_triangle");
+      if (loadTri) loadTri.remove();
+      if (unloadTri) unloadTri.remove();
 
+      // c) Compute old label location using the same helper:
       const lbl = labels[idx];
-      const lblLoc = lbl ? inferLabelLocation(lbl, orientation) : "bottom";
-      if (load || unload) {
+      const oldLoc = lbl
+        ? inferLabelLocation(lbl, orientation)
+        : orientation === "vertical"
+          ? "bottom"
+          : "left";
+
+      // d) Map oldLoc → newLoc according to the 4-step cycle:
+      let newLoc;
+      if (orientation === "horizontal") {
+        // horizontal/left  → vertical/bottom
+        // horizontal/right → vertical/top
+        newLoc = oldLoc === "left" ? "bottom" : "top";
+      } else {
+        // vertical/bottom → horizontal/right
+        // vertical/top    → horizontal/left
+        newLoc = oldLoc === "bottom" ? "right" : "left";
+      }
+
+      // e) If this spot had triangles, re-add them using newLoc & newOrientation
+      if (loadTri || unloadTri) {
         addDockTriangles(
           sp,
           sp.getAttribute("data-spot-id"),
@@ -4176,17 +4206,18 @@
           y,
           newSpotW,
           newSpotH,
-          lblLoc,
+          newLoc,
           newOrientation,
         );
       }
 
+      // f) Reposition the label (if it exists)
       if (lbl) {
         const rotationMode = lbl.getAttribute("transform") ? "90" : "dynamic";
         positionLabel(
           lbl,
           newOrientation,
-          lblLoc,
+          newLoc,
           newSpotW,
           newSpotH,
           newOrientation === "vertical" ? x : 0,
@@ -4197,6 +4228,7 @@
       }
     });
 
+    // 6) Draw the new boundary lines
     for (let i = 0; i <= spots.length; i++) {
       const line = document.createElementNS(
         "http://www.w3.org/2000/svg",
@@ -4221,6 +4253,7 @@
       group.appendChild(line);
     }
 
+    // 7) Update group size, counters, and layer list; record undo
     adjustGroupSize(group);
     updateCounters();
     rebuildLayersList();
